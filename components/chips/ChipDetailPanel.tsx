@@ -91,6 +91,17 @@ export function ChipDetailPanel({
     onDeleted();
   }
 
+  async function handleUnschedule() {
+    if (!chip) return;
+    await fetch(`/api/chips/${chip.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date: null, status: "obskur" }),
+    });
+    onOpenChange(false);
+    onUpdated();
+  }
+
   if (!chip) return null;
 
   return (
@@ -246,6 +257,11 @@ export function ChipDetailPanel({
             <Button onClick={handleSave} disabled={saving} className="flex-1">
               {saving ? "Saving..." : "Save"}
             </Button>
+            {chip.date && (
+              <Button variant="outline" onClick={handleUnschedule}>
+                Unschedule
+              </Button>
+            )}
             <Button variant="destructive" onClick={handleDelete}>
               Delete
             </Button>
