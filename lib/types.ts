@@ -47,3 +47,22 @@ export interface ChipColour {
   sortOrder: number;
   isActive: boolean;
 }
+
+export interface DayTagType {
+  id: string;
+  name: string;
+  icon: string;
+  colour: string | null;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface DayTag {
+  id: string;
+  date: string;
+  tagTypeId: string;
+}
+
+export interface DayTagWithType extends DayTag {
+  tagType: DayTagType;
+}
