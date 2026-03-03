@@ -6,6 +6,8 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
+  SheetFooter,
 } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,9 +21,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
+import { Camera } from "lucide-react";
 import { STATUS_CONFIG, MODIFIER_CONFIG } from "@/lib/types";
 import type { Chip, ChipColour, ChipStatus, ChipModifier } from "@/lib/types";
+import { StatusCircle } from "@/components/ui/StatusCircle";
 
 interface ChipDetailPanelProps {
   chip: Chip | null;
@@ -104,124 +107,189 @@ export function ChipDetailPanel({
 
   if (!chip) return null;
 
+  const activeColour = colours.find((c) => c.id === colourId);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[400px] overflow-y-auto sm:w-[540px]">
-        <SheetHeader>
-          <SheetTitle>Edit Chip</SheetTitle>
+      <SheetContent className="flex w-[420px] flex-col overflow-y-auto sm:max-w-[420px]">
+        <SheetHeader className="pb-0">
+          <div className="flex items-center gap-2.5">
+            {activeColour && (
+              <span
+                className="h-3 w-3 shrink-0 rounded-full"
+                style={{ backgroundColor: activeColour.hex }}
+              />
+            )}
+            <SheetTitle className="text-base">Edit Chip</SheetTitle>
+          </div>
+          <SheetDescription className="sr-only">
+            Edit chip details
+          </SheetDescription>
         </SheetHeader>
 
-        <div className="mt-4 flex flex-col gap-4">
+        <div className="flex flex-1 flex-col gap-5 px-4 pb-2">
           {/* Title */}
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Chip title"
-            className="text-lg font-medium"
+            className="h-10 text-base font-medium"
           />
 
-          {/* Date + Time */}
-          <div className="grid grid-cols-2 gap-2">
-            <Input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
-            <Input
-              type="time"
-              value={time}
-              onChange={(e) => setTime(e.target.value)}
-            />
-          </div>
+          {/* Schedule section */}
+          <fieldset className="space-y-2">
+            <legend className="text-xs font-medium text-muted-foreground">
+              Schedule
+            </legend>
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="h-9 text-sm"
+              />
+              <Input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="h-9 text-sm"
+              />
+            </div>
+          </fieldset>
 
           {/* Colour */}
-          <Select value={colourId} onValueChange={setColourId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Colour" />
-            </SelectTrigger>
-            <SelectContent>
-              {colours.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  <span className="flex items-center gap-2">
-                    <span
-                      className="inline-block h-3 w-3 rounded-full"
-                      style={{ backgroundColor: c.hex }}
-                    />
-                    {c.name}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Separator />
+          <fieldset className="space-y-2">
+            <legend className="text-xs font-medium text-muted-foreground">
+              Colour
+            </legend>
+            <Select value={colourId} onValueChange={setColourId}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="No colour" />
+              </SelectTrigger>
+              <SelectContent>
+                {colours.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="inline-block h-3 w-3 rounded-full"
+                        style={{ backgroundColor: c.hex }}
+                      />
+                      {c.name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </fieldset>
 
           {/* Status */}
-          <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+          <fieldset className="space-y-2">
+            <legend className="text-xs font-medium text-muted-foreground">
               Status
-            </label>
-            <div className="flex flex-wrap gap-1">
-              {(Object.keys(STATUS_CONFIG) as ChipStatus[]).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setStatus(s)}
-                  className={`rounded-md border px-2 py-1 text-xs transition-colors ${
-                    status === s
-                      ? "border-primary bg-primary/10 font-medium"
-                      : "border-border hover:bg-muted"
-                  }`}
-                >
-                  {STATUS_CONFIG[s].icon} {STATUS_CONFIG[s].label}
-                </button>
-              ))}
-            </div>
-          </div>
+            </legend>
+            {(() => {
+              const statuses = Object.keys(STATUS_CONFIG) as ChipStatus[];
+              const activeIdx = statuses.indexOf(status);
+              const activeCfg = STATUS_CONFIG[status];
+              return (
+                <div className="relative flex items-start px-2 pt-1 pb-1">
+                  {/* Track line — thin, runs center-to-center of first/last circle */}
+                  <div
+                    className="pointer-events-none absolute top-[17px] h-px"
+                    style={{ left: "calc(10% + 2px)", right: "calc(10% + 2px)", backgroundColor: "#e4e4e7" }}
+                  />
+                  {/* Filled portion of track */}
+                  {activeIdx > 0 && (
+                    <div
+                      className="pointer-events-none absolute top-[17px] h-px transition-all duration-300 ease-out"
+                      style={{
+                        left: "calc(10% + 2px)",
+                        width: `calc(${(activeIdx / (statuses.length - 1)) * 80}% - 4px)`,
+                        backgroundColor: activeCfg.circleColor,
+                        opacity: 0.4,
+                      }}
+                    />
+                  )}
+                  {statuses.map((s, i) => {
+                    const cfg = STATUS_CONFIG[s];
+                    const isActive = status === s;
+                    const isPast = i < activeIdx;
+                    return (
+                      <button
+                        key={s}
+                        onClick={() => setStatus(s)}
+                        className="group relative z-10 flex flex-1 flex-col items-center gap-2 bg-transparent"
+                      >
+                        <div
+                          className="rounded-full bg-background p-[3px] transition-transform duration-200"
+                          style={isActive ? { transform: "scale(1.3)" } : undefined}
+                        >
+                          <StatusCircle
+                            status={cfg.circle}
+                            color={isActive || isPast ? cfg.circleColor : "#d4d4d8"}
+                            progress={cfg.circleProgress}
+                            weight={2.5}
+                            className="h-[18px] w-[18px] transition-colors duration-200 group-hover:brightness-90"
+                          />
+                        </div>
+                        <span
+                          className="text-[10px] leading-none tracking-wide transition-all duration-200"
+                          style={{
+                            color: isActive ? activeCfg.circleColor : undefined,
+                            fontWeight: isActive ? 600 : 400,
+                            opacity: isActive ? 1 : 0.45,
+                          }}
+                        >
+                          {cfg.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </fieldset>
 
           {/* Modifiers */}
-          <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+          <fieldset className="space-y-2">
+            <legend className="text-xs font-medium text-muted-foreground">
               Modifiers
-            </label>
-            <div className="flex gap-1">
-              {(
-                Object.entries(MODIFIER_CONFIG) as [
-                  string,
-                  { label: string; symbol: string },
-                ][]
-              ).map(([key, config]) => (
-                <Toggle
-                  key={key}
-                  pressed={modifier === key}
-                  onPressedChange={(pressed) =>
-                    setModifier(pressed ? (key as ChipModifier) : null)
-                  }
-                  size="sm"
-                  className="text-sm"
-                >
-                  {config.symbol} {config.label}
-                </Toggle>
-              ))}
+            </legend>
+            <div className="flex flex-wrap gap-1.5">
+              {Object.entries(MODIFIER_CONFIG).map(([key, config]) => {
+                const Icon = config.icon;
+                return (
+                  <Toggle
+                    key={key}
+                    pressed={modifier === key}
+                    onPressedChange={(pressed) =>
+                      setModifier(pressed ? (key as ChipModifier) : null)
+                    }
+                    size="sm"
+                    className="h-8 gap-1.5 text-xs"
+                  >
+                    <Icon className="h-3.5 w-3.5" /> {config.label}
+                  </Toggle>
+                );
+              })}
               <Toggle
                 pressed={isShoot}
                 onPressedChange={setIsShoot}
                 size="sm"
-                className="text-sm"
+                className="h-8 gap-1.5 text-xs"
               >
-                📷 Shoot
+                <Camera className="h-3.5 w-3.5" /> Shoot
               </Toggle>
             </div>
-          </div>
+          </fieldset>
 
-          <Separator />
-
-          {/* Body — markdown with preview */}
-          <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+          {/* Notes */}
+          <fieldset className="space-y-2">
+            <legend className="text-xs font-medium text-muted-foreground">
               Notes
-            </label>
+            </legend>
             <Tabs defaultValue="edit">
-              <TabsList className="mb-1">
+              <TabsList className="mb-1.5 h-8">
                 <TabsTrigger value="edit" className="text-xs">
                   Edit
                 </TabsTrigger>
@@ -229,17 +297,17 @@ export function ChipDetailPanel({
                   Preview
                 </TabsTrigger>
               </TabsList>
-              <TabsContent value="edit">
+              <TabsContent value="edit" className="mt-0">
                 <Textarea
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
                   placeholder="Notes, links, details..."
-                  rows={6}
+                  rows={5}
                   className="font-mono text-sm"
                 />
               </TabsContent>
-              <TabsContent value="preview">
-                <div className="prose prose-sm max-h-48 min-h-[6rem] overflow-y-auto rounded border p-2">
+              <TabsContent value="preview" className="mt-0">
+                <div className="prose prose-sm max-h-48 min-h-[7.5rem] overflow-y-auto rounded-md border p-3 text-sm">
                   {body || (
                     <span className="text-muted-foreground">
                       Nothing to preview
@@ -248,12 +316,18 @@ export function ChipDetailPanel({
                 </div>
               </TabsContent>
             </Tabs>
+          </fieldset>
+
+          {/* Metadata */}
+          <div className="flex gap-4 text-[11px] text-muted-foreground">
+            <span>Created {new Date(chip.createdAt).toLocaleDateString()}</span>
+            <span>Updated {new Date(chip.updatedAt).toLocaleDateString()}</span>
           </div>
+        </div>
 
-          <Separator />
-
-          {/* Actions */}
-          <div className="flex gap-2">
+        {/* Actions pinned to bottom */}
+        <SheetFooter className="border-t">
+          <div className="flex w-full gap-2">
             <Button onClick={handleSave} disabled={saving} className="flex-1">
               {saving ? "Saving..." : "Save"}
             </Button>
@@ -266,13 +340,7 @@ export function ChipDetailPanel({
               Delete
             </Button>
           </div>
-
-          {/* Metadata */}
-          <div className="text-xs text-muted-foreground">
-            <p>Created: {new Date(chip.createdAt).toLocaleString()}</p>
-            <p>Updated: {new Date(chip.updatedAt).toLocaleString()}</p>
-          </div>
-        </div>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
   );

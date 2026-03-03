@@ -1,12 +1,30 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { Star } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import { ColourBlank } from "./ColourBlank";
 import { IngestChipRow } from "./IngestChipRow";
 import type { Chip, ChipColour } from "@/lib/types";
+
+/** Extract hue (0–360) from a hex colour for sorting. */
+function hexHue(hex: string): number {
+  const n = parseInt(hex.replace("#", ""), 16);
+  const r = ((n >> 16) & 255) / 255;
+  const g = ((n >> 8) & 255) / 255;
+  const b = (n & 255) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const d = max - min;
+  if (d === 0) return 0;
+  let h = 0;
+  if (max === r) h = ((g - b) / d + 6) % 6;
+  else if (max === g) h = (b - r) / d + 2;
+  else h = (r - g) / d + 4;
+  return h * 60;
+}
 
 interface IngestSidebarProps {
   colours: ChipColour[];
@@ -22,7 +40,6 @@ export function IngestSidebar({
   const [ingestChips, setIngestChips] = useState<Chip[]>([]);
   const [starredOnly, setStarredOnly] = useState(false);
   const [quickTitle, setQuickTitle] = useState("");
-  const [adding, setAdding] = useState(false);
 
   const fetchIngest = useCallback(async () => {
     const res = await fetch("/api/chips?unscheduled=true&status=obskur");
@@ -35,40 +52,57 @@ export function IngestSidebar({
 
   async function handleQuickAdd(e: React.FormEvent) {
     e.preventDefault();
-    if (!quickTitle.trim()) return;
-    setAdding(true);
-    await fetch("/api/chips", {
+    const title = quickTitle.trim();
+    if (!title) return;
+
+    // Optimistic: inject temp chip immediately
+    const tempId = `temp-${Date.now()}`;
+    const tempChip: Chip = {
+      id: tempId,
+      title,
+      date: null,
+      time: null,
+      durationMinutes: null,
+      colourId: null,
+      status: "obskur",
+      modifier: null,
+      isShoot: false,
+      linkedChipId: null,
+      sortOrder: 0,
+      body: null,
+      starred: false,
+      series: null,
+      seriesNumber: null,
+      calendarUid: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setIngestChips((prev) => [...prev, tempChip]);
+    setQuickTitle("");
+
+    const res = await fetch("/api/chips", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: quickTitle.trim(),
-        status: "obskur",
-      }),
+      body: JSON.stringify({ title, status: "obskur" }),
     });
-    setQuickTitle("");
-    setAdding(false);
+    if (res.ok) {
+      const created: Chip = await res.json();
+      // Replace temp chip with server response
+      setIngestChips((prev) =>
+        prev.map((c) => (c.id === tempId ? created : c))
+      );
+    }
+    // Quiet reconciliation
     fetchIngest();
   }
 
-  const activeColours = colours.filter((c) => c.isActive);
+  const activeColours = colours.filter((c) => c.isActive).sort((a, b) => hexHue(a.hex) - hexHue(b.hex));
   const filteredChips = starredOnly
     ? ingestChips.filter((c) => c.starred)
     : ingestChips;
 
   return (
     <div className="flex h-full w-[280px] flex-col border-r bg-muted/20">
-      {/* Colour chip pile */}
-      <div className="border-b p-2">
-        <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-          Chip Pile
-        </div>
-        <div className="flex flex-wrap gap-1">
-          {activeColours.map((c) => (
-            <ColourBlank key={c.id} colour={c} />
-          ))}
-        </div>
-      </div>
-
       {/* Quick-add + star filter */}
       <div className="border-b p-2">
         <form onSubmit={handleQuickAdd} className="flex gap-1">
@@ -77,9 +111,8 @@ export function IngestSidebar({
             value={quickTitle}
             onChange={(e) => setQuickTitle(e.target.value)}
             className="h-7 flex-1 text-xs"
-            disabled={adding}
           />
-          <Button type="submit" size="sm" className="h-7 px-2 text-xs" disabled={!quickTitle.trim() || adding}>
+          <Button type="submit" size="sm" className="h-7 px-2 text-xs" disabled={!quickTitle.trim()}>
             +
           </Button>
         </form>
@@ -93,7 +126,7 @@ export function IngestSidebar({
             size="sm"
             className="h-6 px-1.5 text-[10px]"
           >
-            ⭐ only
+            <Star className="h-3 w-3" /> only
           </Toggle>
         </div>
       </div>
@@ -117,6 +150,18 @@ export function IngestSidebar({
               {starredOnly ? "No starred ideas" : "No ideas yet"}
             </p>
           )}
+        </div>
+      </div>
+
+      {/* Colour chip pile — pinned to bottom */}
+      <div className="border-t p-2">
+        <div className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          Chip Pile
+        </div>
+        <div className="flex flex-col gap-1">
+          {activeColours.map((c) => (
+            <ColourBlank key={c.id} colour={c} />
+          ))}
         </div>
       </div>
     </div>

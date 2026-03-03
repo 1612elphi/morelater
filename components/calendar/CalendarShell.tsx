@@ -8,6 +8,7 @@ import { IngestSidebar } from "@/components/ingest/IngestSidebar";
 import { ChipDetailPanel } from "@/components/chips/ChipDetailPanel";
 import type { Chip, ChipColour, DayTagType, DayTagWithType } from "@/lib/types";
 import { getMonthWeeks, toDateString } from "@/lib/dates";
+import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 interface CalendarShellProps {
   colours: ChipColour[];
@@ -251,35 +252,35 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
     <div className="flex h-full flex-col">
       {/* Header */}
       <div className="flex items-center justify-between border-b px-4 py-2">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="rounded px-2 py-1 text-sm hover:bg-muted"
+            className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
             title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
           >
-            {sidebarOpen ? "◀" : "▶"}
+            {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
           </button>
           <button
             onClick={prevMonth}
-            className="rounded px-2 py-1 text-sm hover:bg-muted"
+            className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
           >
-            ←
+            <ChevronLeft className="h-4 w-4" />
           </button>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">{monthName}</span>
           <button
             onClick={goToday}
-            className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+            className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             Today
           </button>
         </div>
         <button
           onClick={nextMonth}
-          className="rounded px-2 py-1 text-sm hover:bg-muted"
+          className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
         >
-          →
+          <ChevronRight className="h-4 w-4" />
         </button>
       </div>
 

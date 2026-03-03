@@ -1,22 +1,40 @@
+import type { LucideIcon } from "lucide-react";
+import {
+  Lightbulb,
+  Pin,
+  Wrench,
+  Pause,
+  Radio,
+  Triangle,
+  Star,
+  Camera,
+} from "lucide-react";
+import type { StatusCircleStatus } from "@/components/ui/StatusCircle";
+
 export type ChipStatus = "obskur" | "lumet" | "actus" | "statis" | "exsol";
 
 export type ChipModifier = "meeting_low" | "meeting_high" | null;
 
 export const STATUS_CONFIG: Record<
   ChipStatus,
-  { label: string; icon: string }
+  { label: string; icon: LucideIcon; circle: StatusCircleStatus; circleColor: string; circleProgress: number }
 > = {
-  obskur: { label: "OBSKUR", icon: "💡" },
-  lumet: { label: "LUMET", icon: "📌" },
-  actus: { label: "ACTUS", icon: "🔧" },
-  statis: { label: "STATIS", icon: "⏸" },
-  exsol: { label: "EXSOL", icon: "📡" },
+  obskur: { label: "OBSKUR", icon: Lightbulb, circle: "backlog", circleColor: "#ef4444", circleProgress: 0 },
+  lumet: { label: "LUMET", icon: Pin, circle: "todo", circleColor: "#f97316", circleProgress: 0 },
+  actus: { label: "ACTUS", icon: Wrench, circle: "in-progress", circleColor: "#eab308", circleProgress: 50 },
+  statis: { label: "STATIS", icon: Pause, circle: "in-progress", circleColor: "#22c55e", circleProgress: 85 },
+  exsol: { label: "EXSOL", icon: Radio, circle: "done", circleColor: "#3b82f6", circleProgress: 0 },
 };
 
-export const MODIFIER_CONFIG = {
-  meeting_low: { label: "Meeting (low)", symbol: "△" },
-  meeting_high: { label: "Meeting (high)", symbol: "★" },
-} as const;
+export const MODIFIER_CONFIG: Record<
+  string,
+  { label: string; icon: LucideIcon }
+> = {
+  meeting_low: { label: "Meeting (low)", icon: Triangle },
+  meeting_high: { label: "Meeting (high)", icon: Star },
+};
+
+export const SHOOT_ICON = Camera;
 
 export interface Chip {
   id: string;
