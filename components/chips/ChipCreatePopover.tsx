@@ -21,14 +21,12 @@ interface ChipCreatePopoverProps {
   date: string;
   colours: ChipColour[];
   onCreated: () => void;
-  trigger: React.ReactNode;
 }
 
 export function ChipCreatePopover({
   date,
   colours,
   onCreated,
-  trigger,
 }: ChipCreatePopoverProps) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -62,7 +60,15 @@ export function ChipCreatePopover({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+      <PopoverTrigger asChild>
+        <button
+          className={`h-5 w-5 items-center justify-center rounded text-xs text-muted-foreground hover:bg-muted ${
+            open ? "flex" : "hidden group-hover/day:flex"
+          }`}
+        >
+          +
+        </button>
+      </PopoverTrigger>
       <PopoverContent className="w-64 p-3" align="start">
         <form onSubmit={handleSubmit} className="flex flex-col gap-2">
           <Input

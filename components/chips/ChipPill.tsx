@@ -30,11 +30,11 @@ export function ChipPill({ chip, colour, onClick, index, group }: ChipPillProps)
     <button
       ref={ref}
       onClick={onClick}
-      className={`flex w-full items-center gap-1 rounded px-1 py-0.5 text-left text-[10px] leading-tight transition-colors hover:brightness-90 ${
+      className={`flex w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-[11px] leading-tight shadow-sm transition-colors hover:brightness-90 ${
         isDragging ? "opacity-50" : ""
       }`}
       style={{
-        backgroundColor: colour ? colour.hex + "33" : "#94a3b833",
+        backgroundColor: colour ? colour.hex + "22" : "#94a3b822",
         borderLeft: `3px solid ${colour?.hex ?? "#94a3b8"}`,
       }}
     >
@@ -46,7 +46,7 @@ export function ChipPill({ chip, colour, onClick, index, group }: ChipPillProps)
         <span className="shrink-0 text-muted-foreground">←</span>
       )}
       {chip.time && (
-        <span className="shrink-0 text-muted-foreground">{chip.time}</span>
+        <span className="shrink-0 tabular-nums text-muted-foreground">{chip.time}</span>
       )}
     </button>
   );

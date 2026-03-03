@@ -84,7 +84,7 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
   }
 
   async function handleDragEnd(event: any) {
-    const { source, target } = event;
+    const { source, target } = event.operation;
     if (!target?.id || event.canceled) return;
 
     const newDate = target.id as string;
