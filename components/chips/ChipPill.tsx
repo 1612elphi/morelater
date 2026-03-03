@@ -1,3 +1,6 @@
+"use client";
+
+import { useSortable } from "@dnd-kit/react/sortable";
 import { STATUS_CONFIG, MODIFIER_CONFIG } from "@/lib/types";
 import type { Chip, ChipColour, ChipStatus } from "@/lib/types";
 
@@ -5,9 +8,19 @@ interface ChipPillProps {
   chip: Chip;
   colour: ChipColour | undefined;
   onClick: () => void;
+  index: number;
+  group: string;
 }
 
-export function ChipPill({ chip, colour, onClick }: ChipPillProps) {
+export function ChipPill({ chip, colour, onClick, index, group }: ChipPillProps) {
+  const { ref, isDragging } = useSortable({
+    id: chip.id,
+    index,
+    type: "chip",
+    accept: "chip",
+    group,
+  });
+
   const statusIcon = STATUS_CONFIG[chip.status as ChipStatus]?.icon ?? "";
   const modifierSymbol = chip.modifier
     ? MODIFIER_CONFIG[chip.modifier]?.symbol
@@ -15,8 +28,11 @@ export function ChipPill({ chip, colour, onClick }: ChipPillProps) {
 
   return (
     <button
+      ref={ref}
       onClick={onClick}
-      className="flex w-full items-center gap-1 rounded px-1 py-0.5 text-left text-[10px] leading-tight transition-colors hover:brightness-90"
+      className={`flex w-full items-center gap-1 rounded px-1 py-0.5 text-left text-[10px] leading-tight transition-colors hover:brightness-90 ${
+        isDragging ? "opacity-50" : ""
+      }`}
       style={{
         backgroundColor: colour ? colour.hex + "33" : "#94a3b833",
         borderLeft: `3px solid ${colour?.hex ?? "#94a3b8"}`,

@@ -1,3 +1,7 @@
+"use client";
+
+import { useDroppable } from "@dnd-kit/react";
+import { CollisionPriority } from "@dnd-kit/abstract";
 import { isToday } from "@/lib/dates";
 import { ChipPill } from "@/components/chips/ChipPill";
 import { ChipCreatePopover } from "@/components/chips/ChipCreatePopover";
@@ -25,12 +29,21 @@ export function DayCell({
   onChipCreated,
 }: DayCellProps) {
   const today = isToday(date);
+  const { ref: dropRef, isDropTarget } = useDroppable({
+    id: dateStr,
+    type: "day",
+    accept: "chip",
+    collisionPriority: CollisionPriority.Low,
+  });
 
   return (
     <div
+      ref={dropRef}
       className={`group relative flex flex-col border-r p-1 last:border-r-0 ${
         isOutsideMonth ? "bg-muted/30" : ""
-      } ${today ? "bg-primary/5" : ""}`}
+      } ${today ? "bg-primary/5" : ""} ${
+        isDropTarget ? "ring-2 ring-primary/30 ring-inset" : ""
+      }`}
     >
       {/* Date number */}
       <div className="mb-0.5 flex items-center justify-between">
@@ -59,7 +72,7 @@ export function DayCell({
 
       {/* Chip stack */}
       <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto">
-        {chips.map((chip) => {
+        {chips.map((chip, index) => {
           const colour = colours.find((c) => c.id === chip.colourId);
           return (
             <ChipPill
@@ -67,6 +80,8 @@ export function DayCell({
               chip={chip}
               colour={colour}
               onClick={() => onChipClick(chip)}
+              index={index}
+              group={dateStr}
             />
           );
         })}

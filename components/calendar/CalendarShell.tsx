@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { DragDropProvider } from "@dnd-kit/react";
 import { CalendarGrid } from "./CalendarGrid";
 import { ChipDetailPanel } from "@/components/chips/ChipDetailPanel";
 import type { Chip, ChipColour } from "@/lib/types";
@@ -63,6 +64,25 @@ export function CalendarShell({ colours }: CalendarShellProps) {
     setMonth(now.getMonth());
   }
 
+  async function handleDragEnd(event: any) {
+    const { source, target } = event;
+    if (!target?.id || event.canceled) return;
+
+    const chipId = source.id as string;
+    const newDate = target.id as string;
+
+    // Don't do anything if dropped on the same day
+    const chip = chips.find((c) => c.id === chipId);
+    if (chip && chip.date === newDate) return;
+
+    await fetch(`/api/chips/${chipId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date: newDate }),
+    });
+    fetchChips();
+  }
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b px-4 py-2">
@@ -89,15 +109,17 @@ export function CalendarShell({ colours }: CalendarShellProps) {
         </button>
       </div>
       <div className="flex-1 overflow-auto">
-        <CalendarGrid
-          year={year}
-          month={month}
-          chips={chips}
-          colours={colours}
-          onChipClick={(chip) => setSelectedChip(chip)}
-          onAddChip={() => {}}
-          onChipCreated={fetchChips}
-        />
+        <DragDropProvider onDragEnd={handleDragEnd}>
+          <CalendarGrid
+            year={year}
+            month={month}
+            chips={chips}
+            colours={colours}
+            onChipClick={(chip) => setSelectedChip(chip)}
+            onAddChip={() => {}}
+            onChipCreated={fetchChips}
+          />
+        </DragDropProvider>
       </div>
       <ChipDetailPanel
         chip={selectedChip}
