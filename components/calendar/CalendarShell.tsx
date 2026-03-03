@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { DragDropProvider } from "@dnd-kit/react";
 import { CalendarGrid } from "./CalendarGrid";
 import { DragDock } from "./DragDock";
@@ -9,6 +9,8 @@ import { ChipDetailPanel } from "@/components/chips/ChipDetailPanel";
 import type { Chip, ChipColour, DayTagType, DayTagWithType } from "@/lib/types";
 import { getMonthWeeks, toDateString } from "@/lib/dates";
 import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { ChipRefProvider } from "./ChipRefContext";
+import { ChipConnectors } from "./ChipConnectors";
 
 interface CalendarShellProps {
   colours: ChipColour[];
@@ -26,6 +28,7 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const gridRef = useRef<HTMLDivElement>(null);
 
   const weeks = getMonthWeeks(year, month);
   const startDate = toDateString(weeks[0][0]);
@@ -290,29 +293,32 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
           onDragStart={() => setIsDragging(true)}
           onDragEnd={(event) => { setIsDragging(false); handleDragEnd(event); }}
         >
-          {sidebarOpen && (
-            <IngestSidebar
-              colours={colours}
-              onChipClick={(chip) => setSelectedChip(chip)}
-              refreshKey={refreshKey}
-            />
-          )}
-          <div className="flex-1 overflow-auto">
-            <CalendarGrid
-              year={year}
-              month={month}
-              chips={chips}
-              colours={colours}
-              dayTags={dayTags}
-              tagTypes={tagTypes}
-              onChipClick={(chip) => setSelectedChip(chip)}
-              onAddChip={() => {}}
-              onChipCreated={refreshAll}
-              onAddTag={handleAddTag}
-              onRemoveTag={handleRemoveTag}
-            />
-          </div>
-          <DragDock visible={isDragging} />
+          <ChipRefProvider>
+            {sidebarOpen && (
+              <IngestSidebar
+                colours={colours}
+                onChipClick={(chip) => setSelectedChip(chip)}
+                refreshKey={refreshKey}
+              />
+            )}
+            <div className="relative flex-1 overflow-auto" ref={gridRef}>
+              <CalendarGrid
+                year={year}
+                month={month}
+                chips={chips}
+                colours={colours}
+                dayTags={dayTags}
+                tagTypes={tagTypes}
+                onChipClick={(chip) => setSelectedChip(chip)}
+                onAddChip={() => {}}
+                onChipCreated={refreshAll}
+                onAddTag={handleAddTag}
+                onRemoveTag={handleRemoveTag}
+              />
+              <ChipConnectors chips={chips} colours={colours} gridRef={gridRef} />
+            </div>
+            <DragDock visible={isDragging} />
+          </ChipRefProvider>
         </DragDropProvider>
       </div>
 
