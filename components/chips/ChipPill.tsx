@@ -22,10 +22,10 @@ export function ChipPill({ chip, colour, onClick }: ChipPillProps) {
     : null;
 
   return (
-    <button
+    <div
       ref={ref}
       onClick={onClick}
-      className={`flex w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-[11px] leading-tight shadow-sm transition-colors hover:brightness-90 ${
+      className={`flex w-full cursor-grab items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-[11px] leading-tight shadow-sm transition-colors hover:brightness-90 active:cursor-grabbing ${
         isDragging ? "opacity-50" : ""
       }`}
       style={{
@@ -43,6 +43,6 @@ export function ChipPill({ chip, colour, onClick }: ChipPillProps) {
       {chip.time && (
         <span className="shrink-0 tabular-nums text-muted-foreground">{chip.time}</span>
       )}
-    </button>
+    </div>
   );
 }
