@@ -338,6 +338,10 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
           const res = await fetch(`/api/chips/${chipId}`);
           if (res.ok) setSelectedChip(await res.json());
         }}
+        onFollowUp={(newChip) => {
+          setSelectedChip(newChip);
+          refreshAll();
+        }}
         onDeleted={() => {
           // Optimistic: remove chip from local state immediately
           if (selectedChip) {

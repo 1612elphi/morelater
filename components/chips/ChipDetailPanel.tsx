@@ -34,6 +34,7 @@ interface ChipDetailPanelProps {
   onUpdated: () => void;
   onDeleted: () => void;
   onLinkedChipClick?: (chipId: string) => void;
+  onFollowUp?: (chip: Chip) => void;
 }
 
 export function ChipDetailPanel({
@@ -44,6 +45,7 @@ export function ChipDetailPanel({
   onUpdated,
   onDeleted,
   onLinkedChipClick,
+  onFollowUp,
 }: ChipDetailPanelProps) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
@@ -370,6 +372,30 @@ export function ChipDetailPanel({
           <div className="flex w-full gap-2">
             <Button onClick={handleSave} disabled={saving} className="flex-1">
               {saving ? "Saving..." : "Save"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                if (!chip) return;
+                const res = await fetch("/api/chips", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    title: "",
+                    linkedChipId: chip.id,
+                    colourId: chip.colourId,
+                    date: chip.date,
+                    status: "lumet",
+                  }),
+                });
+                if (res.ok) {
+                  const created = await res.json();
+                  onUpdated();
+                  onFollowUp?.(created);
+                }
+              }}
+            >
+              Follow-up
             </Button>
             {chip.date && (
               <Button variant="outline" onClick={handleUnschedule}>
