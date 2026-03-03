@@ -19,7 +19,7 @@ export const chips = sqliteTable("chips", {
   status: text("status").notNull().default("obskur"),
   modifier: text("modifier"), // 'meeting_low', 'meeting_high', or null
   isShoot: integer("is_shoot", { mode: "boolean" }).notNull().default(false),
-  linkedChipId: text("linked_chip_id").references(() => chips.id),
+  linkedChipId: text("linked_chip_id"), // FK to chips.id (self-ref handled in migration SQL)
   sortOrder: integer("sort_order").notNull().default(0),
   body: text("body"), // markdown
   starred: integer("starred", { mode: "boolean" }).notNull().default(false),

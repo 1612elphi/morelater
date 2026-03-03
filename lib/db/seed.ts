@@ -19,21 +19,23 @@ const DEFAULT_DAY_TAG_TYPES = [
 ];
 
 export function seedDefaults(db: Database) {
-  const existingColours = db.select().from(chipColours).all();
-  if (existingColours.length === 0) {
-    for (const colour of DEFAULT_COLOURS) {
-      db.insert(chipColours)
-        .values({ id: uuid(), ...colour })
-        .run();
+  db.transaction((tx) => {
+    const existingColours = tx.select().from(chipColours).all();
+    if (existingColours.length === 0) {
+      for (const colour of DEFAULT_COLOURS) {
+        tx.insert(chipColours)
+          .values({ id: uuid(), ...colour })
+          .run();
+      }
     }
-  }
 
-  const existingTags = db.select().from(dayTagTypes).all();
-  if (existingTags.length === 0) {
-    for (const tag of DEFAULT_DAY_TAG_TYPES) {
-      db.insert(dayTagTypes)
-        .values({ id: uuid(), ...tag })
-        .run();
+    const existingTags = tx.select().from(dayTagTypes).all();
+    if (existingTags.length === 0) {
+      for (const tag of DEFAULT_DAY_TAG_TYPES) {
+        tx.insert(dayTagTypes)
+          .values({ id: uuid(), ...tag })
+          .run();
+      }
     }
-  }
+  });
 }

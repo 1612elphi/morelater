@@ -8,7 +8,9 @@ import { seedDefaults } from "./seed";
 const DATABASE_PATH =
   process.env.DATABASE_PATH ?? path.resolve(process.cwd(), "data/morelater.db");
 
-function createDb() {
+type DrizzleDb = ReturnType<typeof initDb>;
+
+function initDb() {
   const sqlite = new Database(DATABASE_PATH);
   sqlite.pragma("journal_mode = WAL");
   sqlite.pragma("busy_timeout = 5000");
@@ -28,19 +30,30 @@ function createDb() {
 
 declare global {
   // eslint-disable-next-line no-var
-  var _db: ReturnType<typeof createDb> | undefined;
+  var _db: DrizzleDb | undefined;
 }
 
-let db: ReturnType<typeof createDb>;
-
-if (process.env.NODE_ENV === "production") {
-  db = createDb();
-} else {
-  if (!globalThis._db) {
-    globalThis._db = createDb();
+function getDb(): DrizzleDb {
+  if (process.env.NODE_ENV === "production") {
+    return initDb();
   }
-  db = globalThis._db;
+  if (!globalThis._db) {
+    globalThis._db = initDb();
+  }
+  return globalThis._db;
 }
 
-export { db };
-export type Database = typeof db;
+// Lazy proxy — DB is only initialized on first property access (not at import time).
+// This prevents build workers from racing on SQLite during `next build`.
+export const db: DrizzleDb = new Proxy({} as DrizzleDb, {
+  get(_target, prop, receiver) {
+    const instance = getDb();
+    const value = Reflect.get(instance, prop, receiver);
+    if (typeof value === "function") {
+      return value.bind(instance);
+    }
+    return value;
+  },
+});
+
+export type Database = DrizzleDb;
