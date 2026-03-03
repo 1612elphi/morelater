@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { DragDropProvider } from "@dnd-kit/react";
 import { CalendarGrid } from "./CalendarGrid";
+import { DragDock } from "./DragDock";
 import { IngestSidebar } from "@/components/ingest/IngestSidebar";
 import { ChipDetailPanel } from "@/components/chips/ChipDetailPanel";
 import type { Chip, ChipColour, DayTagType, DayTagWithType } from "@/lib/types";
@@ -23,6 +24,7 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
 
   const weeks = getMonthWeeks(year, month);
   const startDate = toDateString(weeks[0][0]);
@@ -87,11 +89,66 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
     const { source, target } = event.operation;
     if (!target?.id || event.canceled) return;
 
-    const newDate = target.id as string;
+    const targetId = target.id as string;
+
+    // Handle dock status drops
+    if (targetId.startsWith("dock-status-")) {
+      const newStatus = targetId.replace("dock-status-", "") as Chip["status"];
+      const chipId = source.id as string;
+      // Optimistic update
+      setChips((prev) =>
+        prev.map((c) => (c.id === chipId ? { ...c, status: newStatus } : c))
+      );
+      setRefreshKey((k) => k + 1);
+      fetch(`/api/chips/${chipId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      }).then(() => fetchChips(), () => fetchChips());
+      return;
+    }
+
+    // Handle dock delete drops
+    if (targetId === "dock-delete") {
+      const chipId = source.id as string;
+      // Optimistic remove
+      setChips((prev) => prev.filter((c) => c.id !== chipId));
+      setRefreshKey((k) => k + 1);
+      fetch(`/api/chips/${chipId}`, { method: "DELETE" })
+        .then(() => fetchChips(), () => fetchChips());
+      return;
+    }
+
+    const newDate = targetId;
 
     // Handle colour-blank drops — create a new chip
     if (source.type === "colour-blank") {
       const colourId = source.data?.colourId as string;
+      const tempId = `temp-${Date.now()}`;
+      const tempChip: Chip = {
+        id: tempId,
+        title: "New chip",
+        date: newDate,
+        time: null,
+        durationMinutes: null,
+        colourId,
+        status: "lumet",
+        modifier: null,
+        isShoot: false,
+        linkedChipId: null,
+        sortOrder: 0,
+        body: null,
+        starred: false,
+        series: null,
+        seriesNumber: null,
+        calendarUid: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Optimistic: show chip immediately
+      setChips((prev) => [...prev, tempChip]);
+
       const res = await fetch("/api/chips", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -103,10 +160,16 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
         }),
       });
       if (res.ok) {
-        const created = await res.json();
+        const created: Chip = await res.json();
+        // Replace temp chip with server response
+        setChips((prev) =>
+          prev.map((c) => (c.id === tempId ? created : c))
+        );
         setSelectedChip(created);
       }
-      refreshAll();
+      // Quiet background reconciliation
+      fetchChips();
+      setRefreshKey((k) => k + 1);
       return;
     }
 
@@ -123,12 +186,51 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
       updates.status = "lumet";
     }
 
-    await fetch(`/api/chips/${chipId}`, {
+    // Optimistic: update chip in local state immediately
+    if (chip) {
+      setChips((prev) =>
+        prev.map((c) =>
+          c.id === chipId
+            ? { ...c, date: newDate, ...(updates.status ? { status: updates.status as Chip["status"] } : {}) }
+            : c
+        )
+      );
+    } else {
+      // Ingest chip not in local chips — inject it optimistically
+      const draggedChip = source.data?.chip as Chip | undefined;
+      const ingestChip: Chip = draggedChip
+        ? { ...draggedChip, date: newDate, status: "lumet" }
+        : {
+            id: chipId,
+            title: "Chip",
+            date: newDate,
+            time: null,
+            durationMinutes: null,
+            colourId: null,
+            status: "lumet",
+            modifier: null,
+            isShoot: false,
+            linkedChipId: null,
+            sortOrder: 0,
+            body: null,
+            starred: false,
+            series: null,
+            seriesNumber: null,
+            calendarUid: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+      setChips((prev) => [...prev, ingestChip]);
+    }
+    // Sidebar should update immediately
+    setRefreshKey((k) => k + 1);
+
+    // Fire API call, then reconcile
+    fetch(`/api/chips/${chipId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updates),
-    });
-    refreshAll();
+    }).then(() => fetchChips(), () => fetchChips());
   }
 
   async function handleAddTag(date: string, tagTypeId: string) {
@@ -183,7 +285,10 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
 
       {/* Main content: sidebar + grid */}
       <div className="flex flex-1 overflow-hidden">
-        <DragDropProvider onDragEnd={handleDragEnd}>
+        <DragDropProvider
+          onDragStart={() => setIsDragging(true)}
+          onDragEnd={(event) => { setIsDragging(false); handleDragEnd(event); }}
+        >
           {sidebarOpen && (
             <IngestSidebar
               colours={colours}
@@ -206,6 +311,7 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
               onRemoveTag={handleRemoveTag}
             />
           </div>
+          <DragDock visible={isDragging} />
         </DragDropProvider>
       </div>
 
@@ -221,7 +327,14 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
           refreshAll();
           setSelectedChip(null);
         }}
-        onDeleted={refreshAll}
+        onDeleted={() => {
+          // Optimistic: remove chip from local state immediately
+          if (selectedChip) {
+            setChips((prev) => prev.filter((c) => c.id !== selectedChip.id));
+          }
+          setSelectedChip(null);
+          refreshAll();
+        }}
       />
     </div>
   );
