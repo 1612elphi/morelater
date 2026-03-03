@@ -11,9 +11,10 @@ interface ChipPillProps {
   chip: Chip;
   colour: ChipColour | undefined;
   onClick: () => void;
+  isLinkTarget?: boolean;
 }
 
-export function ChipPill({ chip, colour, onClick }: ChipPillProps) {
+export function ChipPill({ chip, colour, onClick, isLinkTarget }: ChipPillProps) {
   const { ref, isDragging } = useDraggable({
     id: chip.id,
     type: "chip",
@@ -44,7 +45,7 @@ export function ChipPill({ chip, colour, onClick }: ChipPillProps) {
       onClick={onClick}
       className={`flex w-full cursor-grab items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-[11px] leading-tight shadow-sm transition-colors hover:brightness-90 active:cursor-grabbing ${
         isDragging ? "opacity-50" : ""
-      }`}
+      } ${isLinkTarget ? "ring-2 ring-primary/40 animate-pulse" : ""}`}
       style={{
         backgroundColor: colour ? colour.hex + "22" : "#94a3b822",
         borderLeft: `3px solid ${colour?.hex ?? "#94a3b8"}`,

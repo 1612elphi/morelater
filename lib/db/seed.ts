@@ -11,11 +11,11 @@ const DEFAULT_COLOURS = [
 ];
 
 const DEFAULT_DAY_TAG_TYPES = [
-  { name: "PTO", icon: "ø", colour: null, sortOrder: 0 },
-  { name: "Unpaid TO", icon: "🟥", colour: "#E53935", sortOrder: 1 },
-  { name: "Print Shop", icon: "P", colour: null, sortOrder: 2 },
-  { name: "WFH", icon: "🏠", colour: null, sortOrder: 3 },
-  { name: "Editing", icon: "🎬", colour: null, sortOrder: 4 },
+  { name: "PTO", icon: "circle-slash", colour: null, sortOrder: 0 },
+  { name: "Unpaid TO", icon: "square", colour: "#E53935", sortOrder: 1 },
+  { name: "Print Shop", icon: "store", colour: null, sortOrder: 2 },
+  { name: "WFH", icon: "house", colour: null, sortOrder: 3 },
+  { name: "Editing", icon: "clapperboard", colour: null, sortOrder: 4 },
 ];
 
 export function seedDefaults(db: Database) {

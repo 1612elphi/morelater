@@ -15,6 +15,8 @@ interface WeekRowProps {
   onChipCreated: () => void;
   onAddTag: (date: string, tagTypeId: string) => void;
   onRemoveTag: (tagId: string) => void;
+  linkingChipId?: string | null;
+  onCreatedForLinking?: (chipId: string) => void;
 }
 
 export function WeekRow({
@@ -30,6 +32,8 @@ export function WeekRow({
   onChipCreated,
   onAddTag,
   onRemoveTag,
+  linkingChipId,
+  onCreatedForLinking,
 }: WeekRowProps) {
   return (
     <div className="grid min-h-24 flex-1 grid-cols-[3rem_repeat(7,1fr)] border-b last:border-b-0">
@@ -59,6 +63,8 @@ export function WeekRow({
             onChipCreated={onChipCreated}
             onAddTag={onAddTag}
             onRemoveTag={onRemoveTag}
+            linkingChipId={linkingChipId}
+            onCreatedForLinking={onCreatedForLinking}
           />
         );
       })}

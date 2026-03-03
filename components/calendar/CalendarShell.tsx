@@ -28,6 +28,7 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [linkingChipId, setLinkingChipId] = useState<string | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
   const weeks = getMonthWeeks(year, month);
@@ -237,6 +238,21 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
     }).then(() => fetchChips(), () => fetchChips());
   }
 
+  async function handleChipClick(chip: Chip) {
+    if (linkingChipId) {
+      // Link-pick mode: PATCH the new chip's linkedChipId to the clicked chip
+      await fetch(`/api/chips/${linkingChipId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ linkedChipId: chip.id }),
+      });
+      setLinkingChipId(null);
+      refreshAll();
+      return;
+    }
+    setSelectedChip(chip);
+  }
+
   async function handleAddTag(date: string, tagTypeId: string) {
     await fetch("/api/day-tags", {
       method: "POST",
@@ -297,7 +313,7 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
             {sidebarOpen && (
               <IngestSidebar
                 colours={colours}
-                onChipClick={(chip) => setSelectedChip(chip)}
+                onChipClick={handleChipClick}
                 refreshKey={refreshKey}
               />
             )}
@@ -309,11 +325,16 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
                 colours={colours}
                 dayTags={dayTags}
                 tagTypes={tagTypes}
-                onChipClick={(chip) => setSelectedChip(chip)}
+                onChipClick={handleChipClick}
                 onAddChip={() => {}}
                 onChipCreated={refreshAll}
                 onAddTag={handleAddTag}
                 onRemoveTag={handleRemoveTag}
+                linkingChipId={linkingChipId}
+                onCreatedForLinking={(chipId) => {
+                  refreshAll();
+                  setLinkingChipId(chipId);
+                }}
               />
               <ChipConnectors chips={chips} colours={colours} gridRef={gridRef} />
             </div>
@@ -321,6 +342,21 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
           </ChipRefProvider>
         </DragDropProvider>
       </div>
+
+      {/* Link-pick overlay */}
+      {linkingChipId && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center">
+          <div className="pointer-events-auto flex items-center gap-3 rounded-lg border bg-background px-4 py-2 shadow-lg">
+            <span className="text-sm">Click a chip to link as follow-up</span>
+            <button
+              onClick={() => setLinkingChipId(null)}
+              className="rounded px-2 py-0.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Detail panel */}
       <ChipDetailPanel

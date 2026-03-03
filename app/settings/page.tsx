@@ -16,6 +16,13 @@ export default function SettingsPage() {
   const [newTagIcon, setNewTagIcon] = useState("");
   const [newTagColour, setNewTagColour] = useState("");
 
+  const [calendarUrl, setCalendarUrl] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    setCalendarUrl(`${window.location.origin}/api/calendar.ics`);
+  }, []);
+
   async function loadColours() {
     const res = await fetch("/api/colours");
     if (res.ok) setColours(await res.json());
@@ -89,6 +96,7 @@ export default function SettingsPage() {
         <TabsList>
           <TabsTrigger value="colours">Chip Colours</TabsTrigger>
           <TabsTrigger value="daytags">Day Tags</TabsTrigger>
+          <TabsTrigger value="calendar">Calendar</TabsTrigger>
         </TabsList>
 
         {/* Chip Colours tab — unchanged */}
@@ -208,6 +216,31 @@ export default function SettingsPage() {
             />
             <Button onClick={addTagType} size="sm">
               Add
+            </Button>
+          </div>
+        </TabsContent>
+        {/* Calendar subscription tab */}
+        <TabsContent value="calendar" className="mt-4">
+          <p className="mb-2 text-sm text-muted-foreground">
+            Subscribe to this URL from Apple Calendar, Google Calendar, or any
+            ICS-compatible app.
+          </p>
+          <div className="flex gap-2">
+            <Input
+              readOnly
+              value={calendarUrl}
+              className="h-8 flex-1 font-mono text-sm"
+              onFocus={(e) => e.target.select()}
+            />
+            <Button
+              size="sm"
+              onClick={() => {
+                navigator.clipboard.writeText(calendarUrl);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }}
+            >
+              {copied ? "Copied!" : "Copy"}
             </Button>
           </div>
         </TabsContent>

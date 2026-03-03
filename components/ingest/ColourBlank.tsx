@@ -17,7 +17,7 @@ export function ColourBlank({ colour }: ColourBlankProps) {
   return (
     <div
       ref={ref}
-      className={`flex h-7 cursor-grab items-center gap-1 rounded-md border px-2 text-[10px] font-medium shadow-sm active:cursor-grabbing ${
+      className={`flex h-8 w-full cursor-grab items-center gap-2 rounded-md border px-2.5 text-xs font-medium shadow-sm active:cursor-grabbing ${
         isDragging ? "opacity-50" : ""
       }`}
       style={{
@@ -27,7 +27,7 @@ export function ColourBlank({ colour }: ColourBlankProps) {
       title={colour.name}
     >
       <span
-        className="h-2.5 w-2.5 rounded-full"
+        className="h-3 w-3 shrink-0 rounded-full"
         style={{ backgroundColor: colour.hex }}
       />
       <span className="truncate">{colour.name}</span>

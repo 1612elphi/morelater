@@ -1,6 +1,7 @@
 "use client";
 
 import { useDraggable } from "@dnd-kit/react";
+import { Star } from "lucide-react";
 import type { Chip, ChipColour } from "@/lib/types";
 
 interface IngestChipRowProps {
@@ -13,6 +14,7 @@ export function IngestChipRow({ chip, colour, onClick }: IngestChipRowProps) {
   const { ref, isDragging } = useDraggable({
     id: chip.id,
     type: "chip",
+    data: { chip },
   });
 
   return (
@@ -30,7 +32,7 @@ export function IngestChipRow({ chip, colour, onClick }: IngestChipRowProps) {
         />
       )}
       <span className="min-w-0 flex-1 truncate">{chip.title}</span>
-      {chip.starred && <span className="shrink-0 text-[10px]">⭐</span>}
+      {chip.starred && <Star className="h-3 w-3 shrink-0 fill-current text-amber-500" />}
     </button>
   );
 }

@@ -21,12 +21,14 @@ interface ChipCreatePopoverProps {
   date: string;
   colours: ChipColour[];
   onCreated: () => void;
+  onCreatedForLinking?: (chipId: string) => void;
 }
 
 export function ChipCreatePopover({
   date,
   colours,
   onCreated,
+  onCreatedForLinking,
 }: ChipCreatePopoverProps) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -34,12 +36,12 @@ export function ChipCreatePopover({
   const [time, setTime] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent, forLinking = false) {
     e.preventDefault();
     if (!title.trim()) return;
     setSubmitting(true);
 
-    await fetch("/api/chips", {
+    const res = await fetch("/api/chips", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -51,11 +53,22 @@ export function ChipCreatePopover({
       }),
     });
 
+    let createdId: string | null = null;
+    if (res.ok && forLinking && onCreatedForLinking) {
+      const created = await res.json();
+      createdId = created.id;
+    }
+
     setTitle("");
     setTime("");
     setSubmitting(false);
     setOpen(false);
-    onCreated();
+
+    if (createdId && onCreatedForLinking) {
+      onCreatedForLinking(createdId);
+    } else {
+      onCreated();
+    }
   }
 
   return (
@@ -102,9 +115,22 @@ export function ChipCreatePopover({
             onChange={(e) => setTime(e.target.value)}
             className="h-8 text-sm"
           />
-          <Button type="submit" size="sm" disabled={!title.trim() || submitting}>
-            Add chip
-          </Button>
+          <div className="flex gap-2">
+            <Button type="submit" size="sm" className="flex-1" disabled={!title.trim() || submitting}>
+              Add chip
+            </Button>
+            {onCreatedForLinking && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={!title.trim() || submitting}
+                onClick={(e) => handleSubmit(e, true)}
+              >
+                Follow-up
+              </Button>
+            )}
+          </div>
         </form>
       </PopoverContent>
     </Popover>

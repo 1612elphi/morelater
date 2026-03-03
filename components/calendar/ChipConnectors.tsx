@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useChipRefs } from "./ChipRefContext";
 import type { Chip, ChipColour } from "@/lib/types";
 
@@ -23,6 +23,8 @@ export function ChipConnectors({ chips, colours, gridRef }: ChipConnectorsProps)
   const { mapRef } = useChipRefs();
   const [lines, setLines] = useState<ConnectorLine[]>([]);
   const [size, setSize] = useState({ width: 0, height: 0 });
+  const [visible, setVisible] = useState(true);
+  const generationRef = useRef(0);
 
   const measure = useCallback(() => {
     const grid = gridRef.current;
@@ -61,6 +63,7 @@ export function ChipConnectors({ chips, colours, gridRef }: ChipConnectorsProps)
     setLines(result);
   }, [chips, colours, gridRef, mapRef]);
 
+  // Resize & scroll — measure immediately (no animation needed)
   useEffect(() => {
     measure();
 
@@ -76,9 +79,17 @@ export function ChipConnectors({ chips, colours, gridRef }: ChipConnectorsProps)
     };
   }, [measure, gridRef]);
 
+  // When chips change: hide lines, wait for DOM to settle, re-measure, fade in
   useEffect(() => {
-    const id = requestAnimationFrame(measure);
-    return () => cancelAnimationFrame(id);
+    const gen = ++generationRef.current;
+    setVisible(false);
+
+    const id = setTimeout(() => {
+      if (gen !== generationRef.current) return;
+      measure();
+      setVisible(true);
+    }, 500);
+    return () => clearTimeout(id);
   }, [chips, measure]);
 
   if (lines.length === 0) return null;
@@ -88,7 +99,11 @@ export function ChipConnectors({ chips, colours, gridRef }: ChipConnectorsProps)
       className="pointer-events-none absolute inset-0"
       width={size.width}
       height={size.height}
-      style={{ zIndex: 10 }}
+      style={{
+        zIndex: 10,
+        opacity: visible ? 1 : 0,
+        transition: "opacity 300ms ease-in",
+      }}
     >
       {lines.map((line) => (
         <line
@@ -98,7 +113,7 @@ export function ChipConnectors({ chips, colours, gridRef }: ChipConnectorsProps)
           x2={line.x2}
           y2={line.y2}
           stroke={line.color}
-          strokeWidth={1}
+          strokeWidth={1.5}
           strokeOpacity={0.3}
         />
       ))}
