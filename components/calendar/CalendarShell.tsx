@@ -4,36 +4,47 @@ import { useState, useEffect, useCallback } from "react";
 import { DragDropProvider } from "@dnd-kit/react";
 import { CalendarGrid } from "./CalendarGrid";
 import { ChipDetailPanel } from "@/components/chips/ChipDetailPanel";
-import type { Chip, ChipColour } from "@/lib/types";
+import type { Chip, ChipColour, DayTagType, DayTagWithType } from "@/lib/types";
 import { getMonthWeeks, toDateString } from "@/lib/dates";
 
 interface CalendarShellProps {
   colours: ChipColour[];
+  tagTypes: DayTagType[];
 }
 
-export function CalendarShell({ colours }: CalendarShellProps) {
+export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
   const [chips, setChips] = useState<Chip[]>([]);
+  const [dayTags, setDayTags] = useState<DayTagWithType[]>([]);
   const [selectedChip, setSelectedChip] = useState<Chip | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const weeks = getMonthWeeks(year, month);
+  const startDate = toDateString(weeks[0][0]);
+  const endDate = toDateString(weeks[weeks.length - 1][6]);
+
   const fetchChips = useCallback(async () => {
     setLoading(true);
-    const weeks = getMonthWeeks(year, month);
-    const startDate = toDateString(weeks[0][0]);
-    const endDate = toDateString(weeks[weeks.length - 1][6]);
     const res = await fetch(
       `/api/chips?startDate=${startDate}&endDate=${endDate}`
     );
     if (res.ok) setChips(await res.json());
     setLoading(false);
-  }, [year, month]);
+  }, [startDate, endDate]);
+
+  const fetchDayTags = useCallback(async () => {
+    const res = await fetch(
+      `/api/day-tags?startDate=${startDate}&endDate=${endDate}`
+    );
+    if (res.ok) setDayTags(await res.json());
+  }, [startDate, endDate]);
 
   useEffect(() => {
     fetchChips();
-  }, [fetchChips]);
+    fetchDayTags();
+  }, [fetchChips, fetchDayTags]);
 
   const monthName = new Date(year, month).toLocaleString("default", {
     month: "long",
@@ -83,6 +94,20 @@ export function CalendarShell({ colours }: CalendarShellProps) {
     fetchChips();
   }
 
+  async function handleAddTag(date: string, tagTypeId: string) {
+    await fetch("/api/day-tags", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date, tagTypeId }),
+    });
+    fetchDayTags();
+  }
+
+  async function handleRemoveTag(tagId: string) {
+    await fetch(`/api/day-tags/${tagId}`, { method: "DELETE" });
+    fetchDayTags();
+  }
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b px-4 py-2">
@@ -115,13 +140,13 @@ export function CalendarShell({ colours }: CalendarShellProps) {
             month={month}
             chips={chips}
             colours={colours}
-            dayTags={[]}
-            tagTypes={[]}
+            dayTags={dayTags}
+            tagTypes={tagTypes}
             onChipClick={(chip) => setSelectedChip(chip)}
             onAddChip={() => {}}
             onChipCreated={fetchChips}
-            onAddTag={() => {}}
-            onRemoveTag={() => {}}
+            onAddTag={handleAddTag}
+            onRemoveTag={handleRemoveTag}
           />
         </DragDropProvider>
       </div>

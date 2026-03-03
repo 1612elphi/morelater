@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { chipColours } from "@/lib/db/schema";
+import { chipColours, dayTagTypes } from "@/lib/db/schema";
 import { CalendarShell } from "@/components/calendar/CalendarShell";
 
 export const dynamic = "force-dynamic";
@@ -11,5 +11,11 @@ export default function Home() {
     .orderBy(chipColours.sortOrder)
     .all();
 
-  return <CalendarShell colours={colours} />;
+  const tagTypes = db
+    .select()
+    .from(dayTagTypes)
+    .orderBy(dayTagTypes.sortOrder)
+    .all();
+
+  return <CalendarShell colours={colours} tagTypes={tagTypes} />;
 }
