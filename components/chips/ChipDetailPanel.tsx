@@ -33,6 +33,7 @@ interface ChipDetailPanelProps {
   onOpenChange: (open: boolean) => void;
   onUpdated: () => void;
   onDeleted: () => void;
+  onLinkedChipClick?: (chipId: string) => void;
 }
 
 export function ChipDetailPanel({
@@ -42,6 +43,7 @@ export function ChipDetailPanel({
   onOpenChange,
   onUpdated,
   onDeleted,
+  onLinkedChipClick,
 }: ChipDetailPanelProps) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
@@ -52,6 +54,7 @@ export function ChipDetailPanel({
   const [isShoot, setIsShoot] = useState(false);
   const [body, setBody] = useState("");
   const [saving, setSaving] = useState(false);
+  const [linkedChip, setLinkedChip] = useState<{ id: string; title: string } | null>(null);
 
   useEffect(() => {
     if (chip) {
@@ -63,6 +66,13 @@ export function ChipDetailPanel({
       setModifier(chip.modifier);
       setIsShoot(chip.isShoot);
       setBody(chip.body ?? "");
+      if (chip.linkedChipId) {
+        fetch(`/api/chips/${chip.linkedChipId}`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) => setLinkedChip(data ? { id: data.id, title: data.title } : null));
+      } else {
+        setLinkedChip(null);
+      }
     }
   }, [chip]);
 
@@ -135,6 +145,36 @@ export function ChipDetailPanel({
             placeholder="Chip title"
             className="h-10 text-base font-medium"
           />
+
+          {/* Linked-from */}
+          {linkedChip && (
+            <div className="flex items-center gap-2 rounded-md border border-dashed p-2 text-sm">
+              <span className="text-muted-foreground">&larr;</span>
+              <button
+                className="min-w-0 flex-1 truncate text-left text-primary hover:underline"
+                onClick={() => onLinkedChipClick?.(linkedChip.id)}
+              >
+                {linkedChip.title}
+              </button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 text-xs text-muted-foreground"
+                onClick={async () => {
+                  if (!chip) return;
+                  await fetch(`/api/chips/${chip.id}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ linkedChipId: null }),
+                  });
+                  setLinkedChip(null);
+                  onUpdated();
+                }}
+              >
+                Unlink
+              </Button>
+            </div>
+          )}
 
           {/* Schedule section */}
           <fieldset className="space-y-2">
