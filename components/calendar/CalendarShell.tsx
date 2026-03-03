@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { CalendarGrid } from "./CalendarGrid";
+import { ChipDetailPanel } from "@/components/chips/ChipDetailPanel";
 import type { Chip, ChipColour } from "@/lib/types";
 import { getMonthWeeks, toDateString } from "@/lib/dates";
 
@@ -98,6 +99,19 @@ export function CalendarShell({ colours }: CalendarShellProps) {
           onChipCreated={fetchChips}
         />
       </div>
+      <ChipDetailPanel
+        chip={selectedChip}
+        colours={colours}
+        open={selectedChip !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedChip(null);
+        }}
+        onUpdated={() => {
+          fetchChips();
+          setSelectedChip(null);
+        }}
+        onDeleted={fetchChips}
+      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { isToday } from "@/lib/dates";
 import { ChipPill } from "@/components/chips/ChipPill";
+import { ChipCreatePopover } from "@/components/chips/ChipCreatePopover";
 import type { Chip, ChipColour } from "@/lib/types";
 
 interface DayCellProps {
@@ -44,12 +45,16 @@ export function DayCell({
         >
           {date.getDate()}
         </span>
-        <button
-          onClick={() => onAddChip(dateStr)}
-          className="hidden h-4 w-4 items-center justify-center rounded text-xs text-muted-foreground hover:bg-muted group-hover:flex"
-        >
-          +
-        </button>
+        <ChipCreatePopover
+          date={dateStr}
+          colours={colours}
+          onCreated={onChipCreated}
+          trigger={
+            <button className="hidden h-4 w-4 items-center justify-center rounded text-xs text-muted-foreground hover:bg-muted group-hover:flex">
+              +
+            </button>
+          }
+        />
       </div>
 
       {/* Chip stack */}
