@@ -115,9 +115,13 @@ export function CalendarShell({ colours }: CalendarShellProps) {
             month={month}
             chips={chips}
             colours={colours}
+            dayTags={[]}
+            tagTypes={[]}
             onChipClick={(chip) => setSelectedChip(chip)}
             onAddChip={() => {}}
             onChipCreated={fetchChips}
+            onAddTag={() => {}}
+            onRemoveTag={() => {}}
           />
         </DragDropProvider>
       </div>

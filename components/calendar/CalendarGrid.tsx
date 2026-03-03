@@ -1,15 +1,19 @@
 import { getMonthWeeks, getISOWeekNumber } from "@/lib/dates";
 import { WeekRow } from "./WeekRow";
-import type { Chip, ChipColour } from "@/lib/types";
+import type { Chip, ChipColour, DayTagWithType, DayTagType } from "@/lib/types";
 
 interface CalendarGridProps {
   year: number;
   month: number;
   chips: Chip[];
   colours: ChipColour[];
+  dayTags: DayTagWithType[];
+  tagTypes: DayTagType[];
   onChipClick: (chip: Chip) => void;
   onAddChip: (date: string) => void;
   onChipCreated: () => void;
+  onAddTag: (date: string, tagTypeId: string) => void;
+  onRemoveTag: (tagId: string) => void;
 }
 
 export function CalendarGrid({
@@ -17,9 +21,13 @@ export function CalendarGrid({
   month,
   chips,
   colours,
+  dayTags,
+  tagTypes,
   onChipClick,
   onAddChip,
   onChipCreated,
+  onAddTag,
+  onRemoveTag,
 }: CalendarGridProps) {
   const weeks = getMonthWeeks(year, month);
 
@@ -51,9 +59,13 @@ export function CalendarGrid({
               month={month}
               chips={chips}
               colours={colours}
+              dayTags={dayTags}
+              tagTypes={tagTypes}
               onChipClick={onChipClick}
               onAddChip={onAddChip}
               onChipCreated={onChipCreated}
+              onAddTag={onAddTag}
+              onRemoveTag={onRemoveTag}
             />
           );
         })}

@@ -1,6 +1,6 @@
 import { DayCell } from "./DayCell";
 import { toDateString } from "@/lib/dates";
-import type { Chip, ChipColour } from "@/lib/types";
+import type { Chip, ChipColour, DayTagWithType, DayTagType } from "@/lib/types";
 
 interface WeekRowProps {
   weekNumber: number;
@@ -8,9 +8,13 @@ interface WeekRowProps {
   month: number;
   chips: Chip[];
   colours: ChipColour[];
+  dayTags: DayTagWithType[];
+  tagTypes: DayTagType[];
   onChipClick: (chip: Chip) => void;
   onAddChip: (date: string) => void;
   onChipCreated: () => void;
+  onAddTag: (date: string, tagTypeId: string) => void;
+  onRemoveTag: (tagId: string) => void;
 }
 
 export function WeekRow({
@@ -19,9 +23,13 @@ export function WeekRow({
   month,
   chips,
   colours,
+  dayTags,
+  tagTypes,
   onChipClick,
   onAddChip,
   onChipCreated,
+  onAddTag,
+  onRemoveTag,
 }: WeekRowProps) {
   return (
     <div className="grid min-h-24 flex-1 grid-cols-[3rem_repeat(7,1fr)] border-b last:border-b-0">
@@ -33,6 +41,7 @@ export function WeekRow({
         const dayChips = chips
           .filter((c) => c.date === dateStr)
           .sort((a, b) => a.sortOrder - b.sortOrder);
+        const dayDayTags = dayTags.filter((dt) => dt.date === dateStr);
         const isOutsideMonth = date.getMonth() !== month;
 
         return (
@@ -42,10 +51,14 @@ export function WeekRow({
             dateStr={dateStr}
             chips={dayChips}
             colours={colours}
+            dayTags={dayDayTags}
+            tagTypes={tagTypes}
             isOutsideMonth={isOutsideMonth}
             onChipClick={onChipClick}
             onAddChip={onAddChip}
             onChipCreated={onChipCreated}
+            onAddTag={onAddTag}
+            onRemoveTag={onRemoveTag}
           />
         );
       })}
