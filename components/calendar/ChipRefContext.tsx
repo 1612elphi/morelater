@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useRef, useCallback } from "react";
+import { createContext, useContext, useRef, useCallback, useMemo } from "react";
 
 type ChipRefMap = Map<string, HTMLElement>;
 
@@ -28,8 +28,13 @@ export function ChipRefProvider({ children }: { children: React.ReactNode }) {
     return mapRef.current.get(chipId);
   }, []);
 
+  const value = useMemo(
+    () => ({ register, unregister, getRef, mapRef }),
+    [register, unregister, getRef, mapRef]
+  );
+
   return (
-    <ChipRefContext.Provider value={{ register, unregister, getRef, mapRef }}>
+    <ChipRefContext.Provider value={value}>
       {children}
     </ChipRefContext.Provider>
   );

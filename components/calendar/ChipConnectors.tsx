@@ -29,7 +29,9 @@ export function ChipConnectors({ chips, colours, gridRef }: ChipConnectorsProps)
     if (!grid) return;
 
     const gridRect = grid.getBoundingClientRect();
-    setSize({ width: gridRect.width, height: gridRect.height });
+    const scrollLeft = grid.scrollLeft;
+    const scrollTop = grid.scrollTop;
+    setSize({ width: grid.scrollWidth, height: grid.scrollHeight });
 
     const result: ConnectorLine[] = [];
     const refMap = mapRef.current;
@@ -47,10 +49,10 @@ export function ChipConnectors({ chips, colours, gridRef }: ChipConnectorsProps)
       const hex = colour?.hex ?? "#94a3b8";
 
       result.push({
-        x1: parentRect.right - gridRect.left,
-        y1: parentRect.top + parentRect.height / 2 - gridRect.top,
-        x2: childRect.left - gridRect.left,
-        y2: childRect.top + childRect.height / 2 - gridRect.top,
+        x1: parentRect.right - gridRect.left + scrollLeft,
+        y1: parentRect.top + parentRect.height / 2 - gridRect.top + scrollTop,
+        x2: childRect.left - gridRect.left + scrollLeft,
+        y2: childRect.top + childRect.height / 2 - gridRect.top + scrollTop,
         color: hex,
         key: `${chip.linkedChipId}-${chip.id}`,
       });
@@ -67,7 +69,11 @@ export function ChipConnectors({ chips, colours, gridRef }: ChipConnectorsProps)
 
     const ro = new ResizeObserver(() => measure());
     ro.observe(grid);
-    return () => ro.disconnect();
+    grid.addEventListener("scroll", measure, { passive: true });
+    return () => {
+      ro.disconnect();
+      grid.removeEventListener("scroll", measure);
+    };
   }, [measure, gridRef]);
 
   useEffect(() => {
