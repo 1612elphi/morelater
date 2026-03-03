@@ -71,7 +71,8 @@ export function ChipDetailPanel({
       if (chip.linkedChipId) {
         fetch(`/api/chips/${chip.linkedChipId}`)
           .then((r) => (r.ok ? r.json() : null))
-          .then((data) => setLinkedChip(data ? { id: data.id, title: data.title } : null));
+          .then((data) => setLinkedChip(data ? { id: data.id, title: data.title } : null))
+          .catch(() => setLinkedChip(null));
       } else {
         setLinkedChip(null);
       }
@@ -375,23 +376,31 @@ export function ChipDetailPanel({
             </Button>
             <Button
               variant="outline"
+              disabled={saving}
               onClick={async () => {
-                if (!chip) return;
-                const res = await fetch("/api/chips", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    title: "",
-                    linkedChipId: chip.id,
-                    colourId: chip.colourId,
-                    date: chip.date,
-                    status: "lumet",
-                  }),
-                });
-                if (res.ok) {
-                  const created = await res.json();
-                  onUpdated();
-                  onFollowUp?.(created);
+                if (!chip || saving) return;
+                setSaving(true);
+                try {
+                  const res = await fetch("/api/chips", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      title: "",
+                      linkedChipId: chip.id,
+                      colourId: chip.colourId,
+                      date: chip.date,
+                      status: "lumet",
+                    }),
+                  });
+                  if (res.ok) {
+                    const created = await res.json();
+                    onUpdated();
+                    onFollowUp?.(created);
+                  }
+                } catch {
+                  // silently ignore network errors
+                } finally {
+                  setSaving(false);
                 }
               }}
             >

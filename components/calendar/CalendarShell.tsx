@@ -335,8 +335,10 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
           setSelectedChip(null);
         }}
         onLinkedChipClick={async (chipId) => {
-          const res = await fetch(`/api/chips/${chipId}`);
-          if (res.ok) setSelectedChip(await res.json());
+          try {
+            const res = await fetch(`/api/chips/${chipId}`);
+            if (res.ok) setSelectedChip(await res.json());
+          } catch {}
         }}
         onFollowUp={(newChip) => {
           setSelectedChip(newChip);
