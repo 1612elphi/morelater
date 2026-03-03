@@ -61,18 +61,9 @@ export function DayCell({
         tintColour ? { backgroundColor: tintColour + "15" } : undefined
       }
     >
-      {/* Top row: + button */}
-      <div className="mb-0.5 flex items-center justify-end">
-        <ChipCreatePopover
-          date={dateStr}
-          colours={colours}
-          onCreated={onChipCreated}
-        />
-      </div>
-
       {/* Chip stack */}
       <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto">
-        {chips.map((chip, index) => {
+        {chips.map((chip) => {
           const colour = colours.find((c) => c.id === chip.colourId);
           return (
             <ChipPill
@@ -80,15 +71,18 @@ export function DayCell({
               chip={chip}
               colour={colour}
               onClick={() => onChipClick(chip)}
-              index={index}
-              group={dateStr}
             />
           );
         })}
       </div>
 
-      {/* Bottom row: day tags + date number */}
+      {/* Bottom row: + button, day tags, date number */}
       <div className="mt-0.5 flex items-center justify-end gap-0.5">
+        <ChipCreatePopover
+          date={dateStr}
+          colours={colours}
+          onCreated={onChipCreated}
+        />
         {dayTags.map((dt) => (
           <DayTagBadge key={dt.id} dayTag={dt} onRemove={onRemoveTag} />
         ))}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useSortable } from "@dnd-kit/react/sortable";
+import { useDraggable } from "@dnd-kit/react";
 import { STATUS_CONFIG, MODIFIER_CONFIG } from "@/lib/types";
 import type { Chip, ChipColour, ChipStatus } from "@/lib/types";
 
@@ -8,17 +8,12 @@ interface ChipPillProps {
   chip: Chip;
   colour: ChipColour | undefined;
   onClick: () => void;
-  index: number;
-  group: string;
 }
 
-export function ChipPill({ chip, colour, onClick, index, group }: ChipPillProps) {
-  const { ref, isDragging } = useSortable({
+export function ChipPill({ chip, colour, onClick }: ChipPillProps) {
+  const { ref, isDragging } = useDraggable({
     id: chip.id,
-    index,
     type: "chip",
-    accept: "chip",
-    group,
   });
 
   const statusIcon = STATUS_CONFIG[chip.status as ChipStatus]?.icon ?? "";
