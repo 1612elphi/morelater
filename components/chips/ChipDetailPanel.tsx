@@ -35,6 +35,7 @@ interface ChipDetailPanelProps {
   onDeleted: () => void;
   onLinkedChipClick?: (chipId: string) => void;
   onFollowUp?: (chip: Chip) => void;
+  onLink?: (chipId: string) => void;
 }
 
 export function ChipDetailPanel({
@@ -46,6 +47,7 @@ export function ChipDetailPanel({
   onDeleted,
   onLinkedChipClick,
   onFollowUp,
+  onLink,
 }: ChipDetailPanelProps) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
@@ -150,7 +152,7 @@ export function ChipDetailPanel({
           />
 
           {/* Linked-from */}
-          {linkedChip && (
+          {linkedChip ? (
             <div className="flex items-center gap-2 rounded-md border border-dashed p-2 text-sm">
               <span className="text-muted-foreground">&larr;</span>
               <button
@@ -177,7 +179,19 @@ export function ChipDetailPanel({
                 Unlink
               </Button>
             </div>
-          )}
+          ) : onLink ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 w-fit text-xs text-muted-foreground"
+              onClick={() => {
+                onLink(chip.id);
+                onOpenChange(false);
+              }}
+            >
+              &larr; Link to chip...
+            </Button>
+          ) : null}
 
           {/* Schedule section */}
           <fieldset className="space-y-2">
@@ -371,9 +385,14 @@ export function ChipDetailPanel({
         {/* Actions pinned to bottom */}
         <SheetFooter className="border-t">
           <div className="flex w-full gap-2">
-            <Button onClick={handleSave} disabled={saving} className="flex-1">
-              {saving ? "Saving..." : "Save"}
+            <Button variant="destructive" onClick={handleDelete}>
+              Delete
             </Button>
+            {chip.date && (
+              <Button variant="outline" onClick={handleUnschedule}>
+                Unschedule
+              </Button>
+            )}
             <Button
               variant="outline"
               disabled={saving}
@@ -406,13 +425,8 @@ export function ChipDetailPanel({
             >
               Follow-up
             </Button>
-            {chip.date && (
-              <Button variant="outline" onClick={handleUnschedule}>
-                Unschedule
-              </Button>
-            )}
-            <Button variant="destructive" onClick={handleDelete}>
-              Delete
+            <Button onClick={handleSave} disabled={saving} className="flex-1">
+              {saving ? "Saving..." : "Save"}
             </Button>
           </div>
         </SheetFooter>

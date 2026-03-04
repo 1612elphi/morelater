@@ -380,6 +380,10 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
           setSelectedChip(newChip);
           refreshAll();
         }}
+        onLink={(chipId) => {
+          setSelectedChip(null);
+          setLinkingChipId(chipId);
+        }}
         onDeleted={() => {
           // Optimistic: remove chip from local state immediately
           if (selectedChip) {

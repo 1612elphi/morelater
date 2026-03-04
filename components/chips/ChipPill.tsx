@@ -43,7 +43,7 @@ export function ChipPill({ chip, colour, onClick, isLinkTarget }: ChipPillProps)
     <div
       ref={combinedRef}
       onClick={onClick}
-      className={`flex w-full cursor-grab items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-[11px] leading-tight shadow-sm transition-colors hover:brightness-90 active:cursor-grabbing ${
+      className={`relative z-10 flex w-full cursor-grab items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-[11px] leading-tight shadow-sm transition-colors hover:brightness-90 active:cursor-grabbing ${
         isDragging ? "opacity-50" : ""
       } ${isLinkTarget ? "ring-2 ring-primary/40 animate-pulse" : ""}`}
       style={{

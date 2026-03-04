@@ -51,9 +51,9 @@ export function ChipConnectors({ chips, colours, gridRef }: ChipConnectorsProps)
       const hex = colour?.hex ?? "#94a3b8";
 
       result.push({
-        x1: parentRect.right - gridRect.left + scrollLeft,
+        x1: parentRect.left + parentRect.width / 2 - gridRect.left + scrollLeft,
         y1: parentRect.top + parentRect.height / 2 - gridRect.top + scrollTop,
-        x2: childRect.left - gridRect.left + scrollLeft,
+        x2: childRect.left + childRect.width / 2 - gridRect.left + scrollLeft,
         y2: childRect.top + childRect.height / 2 - gridRect.top + scrollTop,
         color: hex,
         key: `${chip.linkedChipId}-${chip.id}`,
@@ -100,7 +100,7 @@ export function ChipConnectors({ chips, colours, gridRef }: ChipConnectorsProps)
       width={size.width}
       height={size.height}
       style={{
-        zIndex: 10,
+        zIndex: 0,
         opacity: visible ? 1 : 0,
         transition: "opacity 300ms ease-in",
       }}
