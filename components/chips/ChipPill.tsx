@@ -52,7 +52,7 @@ export function ChipPill({ chip, colour, onClick, isLinkTarget }: ChipPillProps)
       }}
     >
       {statusCfg && <StatusCircle status={statusCfg.circle} color={colour?.hex ?? "#94a3b8"} progress={statusCfg.circleProgress} weight={3} className="h-3 w-3 shrink-0" />}
-      <span className="min-w-0 flex-1 truncate font-medium">{chip.title}</span>
+      <span className="min-w-0 flex-1 break-words font-medium">{chip.title}</span>
       {chip.isShoot && <ShootIcon className="h-3 w-3 shrink-0 text-muted-foreground" />}
       {ModifierIcon && <ModifierIcon className="h-3 w-3 shrink-0 text-muted-foreground" />}
       {chip.linkedChipId && (
