@@ -12,10 +12,12 @@ RUN bun build mcp/server.ts --target=node --outfile=dist/mcp-server.js
 
 # -- Runner --
 FROM node:20-alpine AS runner
+RUN apk add --no-cache tzdata
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV DATABASE_PATH=/app/data/morelater.db
+ENV TZ=Europe/Berlin
 
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static

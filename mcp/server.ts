@@ -6,6 +6,8 @@ import { registerResources } from "./resources.js";
 import { registerTools } from "./tools.js";
 import { registerPrompts } from "./prompts.js";
 
+process.env.TZ = process.env.TZ ?? "Europe/Berlin";
+
 const PORT = Number(process.env.MCP_PORT ?? 3001);
 const BASE_URL = process.env.MORELATER_API_URL ?? "http://localhost:3000";
 
