@@ -2,7 +2,7 @@
 
 A drag-and-drop content calendar for planning and scheduling work. Digital replacement for a whiteboard full of coloured sticky notes.
 
-Built with Next.js, SQLite (Drizzle ORM), and Tailwind CSS. Includes an MCP server for AI integration with Claude.
+Built with Next.js, SQLite (Drizzle ORM), and Tailwind CSS. Includes an MCP server for AI integration with Claude, if you're into that sorta thing.
 
 ## Features
 
