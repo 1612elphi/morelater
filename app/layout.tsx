@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeToggle } from "@/components/theme-toggle";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -24,24 +26,34 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
       >
-        <div className="flex h-screen flex-col">
-          <header className="flex h-12 shrink-0 items-center justify-between border-b px-4">
-            <Link href="/" className="text-sm font-semibold tracking-tight">
-              More Later
-            </Link>
-            <Link
-              href="/settings"
-              className="text-xs text-muted-foreground hover:text-foreground"
-            >
-              Settings
-            </Link>
-          </header>
-          <main className="flex-1 overflow-hidden">{children}</main>
-        </div>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <div className="flex h-screen flex-col">
+            <header className="flex h-12 shrink-0 items-center justify-between border-b px-4">
+              <Link href="/" className="text-sm font-semibold tracking-tight">
+                More Later
+              </Link>
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/settings"
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Settings
+                </Link>
+                <ThemeToggle />
+              </div>
+            </header>
+            <main className="flex-1 overflow-hidden">{children}</main>
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );
