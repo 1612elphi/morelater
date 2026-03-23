@@ -57,6 +57,21 @@ export interface Chip {
   updatedAt: string;
 }
 
+export interface ChipRelation {
+  id: string;
+  sourceChipId: string;
+  targetChipId: string;
+  type: string; // 'blocks'
+  createdAt: string;
+}
+
+export interface RelatedChip {
+  id: string;
+  title: string;
+  status: ChipStatus;
+  colourId: string | null;
+}
+
 export interface ChipColour {
   id: string;
   name: string;

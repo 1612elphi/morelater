@@ -8,6 +8,13 @@
       "when": 1772537661282,
       "tag": "0000_natural_outlaw_kid",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1774274123456,
+      "tag": "0001_stiff_lightspeed",
+      "breakpoints": true
     }
   ]
 }
