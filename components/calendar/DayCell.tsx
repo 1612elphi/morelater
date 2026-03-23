@@ -24,6 +24,8 @@ interface DayCellProps {
   onRemoveTag: (tagId: string) => void;
   linkingChipId?: string | null;
   onCreatedForLinking?: (chipId: string) => void;
+  blockedChipIds?: Set<string>;
+  isPickTarget?: boolean;
 }
 
 export function DayCell({
@@ -41,6 +43,8 @@ export function DayCell({
   onRemoveTag,
   linkingChipId,
   onCreatedForLinking,
+  blockedChipIds,
+  isPickTarget,
 }: DayCellProps) {
   const today = isToday(date);
   const { ref: dropRef, isDropTarget } = useDroppable({
@@ -91,6 +95,8 @@ export function DayCell({
               colour={colour}
               onClick={() => onChipClick(chip)}
               isLinkTarget={!!linkingChipId}
+              isBlocked={blockedChipIds?.has(chip.id)}
+              isPickTarget={isPickTarget}
             />
           );
         })}

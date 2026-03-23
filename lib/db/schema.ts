@@ -37,6 +37,18 @@ export const chipTags = sqliteTable("chip_tags", {
   tag: text("tag").notNull(),
 });
 
+export const chipRelations = sqliteTable("chip_relations", {
+  id: text("id").primaryKey(),
+  sourceChipId: text("source_chip_id")
+    .notNull()
+    .references(() => chips.id, { onDelete: "cascade" }),
+  targetChipId: text("target_chip_id")
+    .notNull()
+    .references(() => chips.id, { onDelete: "cascade" }),
+  type: text("type").notNull(), // 'blocks'
+  createdAt: text("created_at").notNull(),
+});
+
 export const dayTagTypes = sqliteTable("day_tag_types", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),

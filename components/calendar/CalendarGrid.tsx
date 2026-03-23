@@ -16,6 +16,8 @@ interface CalendarGridProps {
   onRemoveTag: (tagId: string) => void;
   linkingChipId?: string | null;
   onCreatedForLinking?: (chipId: string) => void;
+  blockedChipIds?: Set<string>;
+  isPickTarget?: boolean;
 }
 
 export function CalendarGrid({
@@ -32,6 +34,8 @@ export function CalendarGrid({
   onRemoveTag,
   linkingChipId,
   onCreatedForLinking,
+  blockedChipIds,
+  isPickTarget,
 }: CalendarGridProps) {
   const weeks = getMonthWeeks(year, month);
 
@@ -72,6 +76,8 @@ export function CalendarGrid({
               onRemoveTag={onRemoveTag}
               linkingChipId={linkingChipId}
               onCreatedForLinking={onCreatedForLinking}
+              blockedChipIds={blockedChipIds}
+              isPickTarget={isPickTarget}
             />
           );
         })}

@@ -6,7 +6,7 @@ import { CalendarGrid } from "./CalendarGrid";
 import { DragDock } from "./DragDock";
 import { IngestSidebar } from "@/components/ingest/IngestSidebar";
 import { ChipDetailPanel } from "@/components/chips/ChipDetailPanel";
-import type { Chip, ChipColour, DayTagType, DayTagWithType } from "@/lib/types";
+import type { Chip, ChipColour, ChipRelation, DayTagType, DayTagWithType } from "@/lib/types";
 import { getMonthWeeks, toDateString } from "@/lib/dates";
 import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { ChipRefProvider } from "./ChipRefContext";
@@ -29,6 +29,8 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [linkingChipId, setLinkingChipId] = useState<string | null>(null);
+  const [relations, setRelations] = useState<ChipRelation[]>([]);
+  const [blockingPick, setBlockingPick] = useState<{ chipId: string; direction: "blocks" | "blockedBy" } | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
   const weeks = getMonthWeeks(year, month);
@@ -44,6 +46,11 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
     setLoading(false);
   }, [startDate, endDate]);
 
+  const fetchRelations = useCallback(async () => {
+    const res = await fetch("/api/relations");
+    if (res.ok) setRelations(await res.json());
+  }, []);
+
   const fetchDayTags = useCallback(async () => {
     const res = await fetch(
       `/api/day-tags?startDate=${startDate}&endDate=${endDate}`
@@ -54,10 +61,12 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
   useEffect(() => {
     fetchChips();
     fetchDayTags();
-  }, [fetchChips, fetchDayTags]);
+    fetchRelations();
+  }, [fetchChips, fetchDayTags, fetchRelations]);
 
   function refreshAll() {
     fetchChips();
+    fetchRelations();
     setRefreshKey((k) => k + 1);
   }
 
@@ -238,7 +247,33 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
     }).then(() => fetchChips(), () => fetchChips());
   }
 
+  // Compute which chips are blocked (have unresolved blockers)
+  const blockedChipIds = new Set<string>();
+  for (const rel of relations) {
+    if (rel.type !== "blocks") continue;
+    // rel.sourceChipId blocks rel.targetChipId
+    // targetChipId is blocked if sourceChipId is not exsol
+    const blocker = chips.find((c) => c.id === rel.sourceChipId);
+    if (blocker && blocker.status !== "exsol") {
+      blockedChipIds.add(rel.targetChipId);
+    }
+  }
+
   async function handleChipClick(chip: Chip) {
+    if (blockingPick) {
+      // Blocking-pick mode: create a blocking relation
+      await fetch(`/api/chips/${blockingPick.chipId}/relations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          targetChipId: chip.id,
+          direction: blockingPick.direction,
+        }),
+      });
+      setBlockingPick(null);
+      refreshAll();
+      return;
+    }
     if (linkingChipId) {
       // Link-pick mode: PATCH the new chip's linkedChipId to the clicked chip
       await fetch(`/api/chips/${linkingChipId}`, {
@@ -335,13 +370,32 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
                   refreshAll();
                   setLinkingChipId(chipId);
                 }}
+                blockedChipIds={blockedChipIds}
+                isPickTarget={!!blockingPick}
               />
-              <ChipConnectors chips={chips} colours={colours} gridRef={gridRef} />
+              <ChipConnectors chips={chips} colours={colours} gridRef={gridRef} relations={relations} />
             </div>
             <DragDock visible={isDragging} />
           </ChipRefProvider>
         </DragDropProvider>
       </div>
+
+      {/* Blocking-pick overlay */}
+      {blockingPick && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center">
+          <div className="pointer-events-auto flex items-center gap-3 rounded-lg border bg-background px-4 py-2 shadow-lg">
+            <span className="text-sm">
+              Click a chip to mark as {blockingPick.direction === "blocks" ? "blocked by this chip" : "blocking this chip"}
+            </span>
+            <button
+              onClick={() => setBlockingPick(null)}
+              className="rounded px-2 py-0.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Link-pick overlay */}
       {linkingChipId && (
@@ -383,6 +437,10 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
         onLink={(chipId) => {
           setSelectedChip(null);
           setLinkingChipId(chipId);
+        }}
+        onBlockingPick={(chipId, direction) => {
+          setSelectedChip(null);
+          setBlockingPick({ chipId, direction });
         }}
         onDeleted={() => {
           // Optimistic: remove chip from local state immediately

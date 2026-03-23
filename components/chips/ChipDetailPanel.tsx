@@ -21,9 +21,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Camera } from "lucide-react";
+import { Camera, Ban, X } from "lucide-react";
 import { STATUS_CONFIG, MODIFIER_CONFIG } from "@/lib/types";
-import type { Chip, ChipColour, ChipStatus, ChipModifier } from "@/lib/types";
+import type { Chip, ChipColour, ChipStatus, ChipModifier, RelatedChip } from "@/lib/types";
 import { StatusCircle } from "@/components/ui/StatusCircle";
 
 interface ChipDetailPanelProps {
@@ -36,6 +36,7 @@ interface ChipDetailPanelProps {
   onLinkedChipClick?: (chipId: string) => void;
   onFollowUp?: (chip: Chip) => void;
   onLink?: (chipId: string) => void;
+  onBlockingPick?: (chipId: string, direction: "blocks" | "blockedBy") => void;
 }
 
 export function ChipDetailPanel({
@@ -48,6 +49,7 @@ export function ChipDetailPanel({
   onLinkedChipClick,
   onFollowUp,
   onLink,
+  onBlockingPick,
 }: ChipDetailPanelProps) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
@@ -59,6 +61,8 @@ export function ChipDetailPanel({
   const [body, setBody] = useState("");
   const [saving, setSaving] = useState(false);
   const [linkedChip, setLinkedChip] = useState<{ id: string; title: string } | null>(null);
+  const [blocksChips, setBlocksChips] = useState<Array<{ relationId: string; chip: RelatedChip }>>([]);
+  const [blockedByChips, setBlockedByChips] = useState<Array<{ relationId: string; chip: RelatedChip }>>([]);
 
   useEffect(() => {
     if (chip) {
@@ -78,6 +82,17 @@ export function ChipDetailPanel({
       } else {
         setLinkedChip(null);
       }
+      // Fetch blocking relations
+      fetch(`/api/chips/${chip.id}/relations`)
+        .then((r) => (r.ok ? r.json() : { blocks: [], blockedBy: [] }))
+        .then((data) => {
+          setBlocksChips(data.blocks ?? []);
+          setBlockedByChips(data.blockedBy ?? []);
+        })
+        .catch(() => {
+          setBlocksChips([]);
+          setBlockedByChips([]);
+        });
     }
   }, [chip]);
 
@@ -192,6 +207,103 @@ export function ChipDetailPanel({
               &larr; Link to chip...
             </Button>
           ) : null}
+
+          {/* Blocking relations */}
+          {(blockedByChips.length > 0 || blocksChips.length > 0 || onBlockingPick) && (
+            <fieldset className="space-y-2">
+              <legend className="text-xs font-medium text-muted-foreground">
+                Relations
+              </legend>
+
+              {/* Blocked by */}
+              {blockedByChips.length > 0 && (
+                <div className="space-y-1">
+                  <span className="text-[11px] font-medium text-muted-foreground">Blocked by</span>
+                  {blockedByChips.map((item) => (
+                    <div key={item.relationId} className="flex items-center gap-2 rounded-md border border-dashed border-red-300/50 bg-red-50/30 p-1.5 text-sm dark:border-red-800/50 dark:bg-red-950/20">
+                      <Ban className="h-3 w-3 shrink-0 text-red-400" />
+                      <button
+                        className="min-w-0 flex-1 truncate text-left text-primary hover:underline"
+                        onClick={() => onLinkedChipClick?.(item.chip.id)}
+                      >
+                        {item.chip.title}
+                      </button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 w-5 p-0 text-muted-foreground"
+                        onClick={async () => {
+                          await fetch(`/api/chips/${chip!.id}/relations/${item.relationId}`, { method: "DELETE" });
+                          setBlockedByChips((prev) => prev.filter((r) => r.relationId !== item.relationId));
+                          onUpdated();
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Blocks */}
+              {blocksChips.length > 0 && (
+                <div className="space-y-1">
+                  <span className="text-[11px] font-medium text-muted-foreground">Blocks</span>
+                  {blocksChips.map((item) => (
+                    <div key={item.relationId} className="flex items-center gap-2 rounded-md border border-dashed border-orange-300/50 bg-orange-50/30 p-1.5 text-sm dark:border-orange-800/50 dark:bg-orange-950/20">
+                      <Ban className="h-3 w-3 shrink-0 text-orange-400" />
+                      <button
+                        className="min-w-0 flex-1 truncate text-left text-primary hover:underline"
+                        onClick={() => onLinkedChipClick?.(item.chip.id)}
+                      >
+                        {item.chip.title}
+                      </button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 w-5 p-0 text-muted-foreground"
+                        onClick={async () => {
+                          await fetch(`/api/chips/${chip!.id}/relations/${item.relationId}`, { method: "DELETE" });
+                          setBlocksChips((prev) => prev.filter((r) => r.relationId !== item.relationId));
+                          onUpdated();
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add relation buttons */}
+              {onBlockingPick && (
+                <div className="flex gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs text-muted-foreground"
+                    onClick={() => {
+                      onBlockingPick(chip!.id, "blockedBy");
+                      onOpenChange(false);
+                    }}
+                  >
+                    + Blocked by...
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs text-muted-foreground"
+                    onClick={() => {
+                      onBlockingPick(chip!.id, "blocks");
+                      onOpenChange(false);
+                    }}
+                  >
+                    + Blocks...
+                  </Button>
+                </div>
+              )}
+            </fieldset>
+          )}
 
           {/* Schedule section */}
           <fieldset className="space-y-2">

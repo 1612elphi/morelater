@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useChipRefs } from "./ChipRefContext";
-import type { Chip, ChipColour } from "@/lib/types";
+import type { Chip, ChipColour, ChipRelation } from "@/lib/types";
 
 interface ChipConnectorsProps {
   chips: Chip[];
   colours: ChipColour[];
   gridRef: React.RefObject<HTMLDivElement | null>;
+  relations?: ChipRelation[];
 }
 
 interface ConnectorLine {
@@ -17,9 +18,10 @@ interface ConnectorLine {
   y2: number;
   color: string;
   key: string;
+  dashed?: boolean;
 }
 
-export function ChipConnectors({ chips, colours, gridRef }: ChipConnectorsProps) {
+export function ChipConnectors({ chips, colours, gridRef, relations = [] }: ChipConnectorsProps) {
   const { mapRef } = useChipRefs();
   const [lines, setLines] = useState<ConnectorLine[]>([]);
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -60,8 +62,29 @@ export function ChipConnectors({ chips, colours, gridRef }: ChipConnectorsProps)
       });
     }
 
+    // Add blocking relation lines
+    for (const rel of relations) {
+      if (rel.type !== "blocks") continue;
+      const sourceEl = refMap.get(rel.sourceChipId);
+      const targetEl = refMap.get(rel.targetChipId);
+      if (!sourceEl || !targetEl) continue;
+
+      const sourceRect = sourceEl.getBoundingClientRect();
+      const targetRect = targetEl.getBoundingClientRect();
+
+      result.push({
+        x1: sourceRect.left + sourceRect.width / 2 - gridRect.left + scrollLeft,
+        y1: sourceRect.top + sourceRect.height / 2 - gridRect.top + scrollTop,
+        x2: targetRect.left + targetRect.width / 2 - gridRect.left + scrollLeft,
+        y2: targetRect.top + targetRect.height / 2 - gridRect.top + scrollTop,
+        color: "#ef4444",
+        key: `block-${rel.id}`,
+        dashed: true,
+      });
+    }
+
     setLines(result);
-  }, [chips, colours, gridRef, mapRef]);
+  }, [chips, colours, gridRef, mapRef, relations]);
 
   // Resize & scroll — measure immediately (no animation needed)
   useEffect(() => {
@@ -115,6 +138,7 @@ export function ChipConnectors({ chips, colours, gridRef }: ChipConnectorsProps)
           stroke={line.color}
           strokeWidth={1.5}
           strokeOpacity={0.3}
+          strokeDasharray={line.dashed ? "4 3" : undefined}
         />
       ))}
     </svg>
