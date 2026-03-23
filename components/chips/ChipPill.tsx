@@ -43,7 +43,7 @@ export function ChipPill({ chip, colour, onClick, isLinkTarget }: ChipPillProps)
     <div
       ref={combinedRef}
       onClick={onClick}
-      className={`relative z-10 flex w-full cursor-grab items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-[11px] leading-tight shadow-sm transition-colors hover:brightness-90 active:cursor-grabbing ${
+      className={`relative z-10 flex w-full cursor-grab items-center gap-1.5 overflow-hidden rounded-md px-1.5 py-1 text-left text-[11px] leading-tight shadow-sm transition-colors hover:brightness-90 active:cursor-grabbing ${
         isDragging ? "opacity-50" : ""
       } ${isLinkTarget ? "ring-2 ring-primary/40 animate-pulse" : ""}`}
       style={{
@@ -52,7 +52,7 @@ export function ChipPill({ chip, colour, onClick, isLinkTarget }: ChipPillProps)
       }}
     >
       {statusCfg && <StatusCircle status={statusCfg.circle} color={colour?.hex ?? "#94a3b8"} progress={statusCfg.circleProgress} weight={3} className="h-3 w-3 shrink-0" />}
-      <span className="min-w-0 flex-1 break-words font-medium">{chip.title}</span>
+      <span className="min-w-0 flex-1 overflow-hidden break-words font-medium">{chip.title}</span>
       {chip.isShoot && <ShootIcon className="h-3 w-3 shrink-0 text-muted-foreground" />}
       {ModifierIcon && <ModifierIcon className="h-3 w-3 shrink-0 text-muted-foreground" />}
       {chip.linkedChipId && (
