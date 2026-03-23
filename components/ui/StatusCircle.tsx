@@ -13,27 +13,12 @@
  *
  * @example
  * ```tsx
- * // Dotted outline (backlog)
  * <StatusCircle status="backlog" className="h-4 w-4" color="#888" />
- *
- * // Empty circle (todo)
- * <StatusCircle status="todo" className="h-4 w-4" color="#888" />
- *
- * // 75% filled pie (in progress)
  * <StatusCircle status="in-progress" progress={75} className="h-4 w-4" color="#f59e0b" />
- *
- * // Filled with checkmark (done)
  * <StatusCircle status="done" className="h-5 w-5" color="#22c55e" />
- *
- * // Filled with X (cancelled)
- * <StatusCircle status="cancelled" className="h-5 w-5" color="#ef4444" />
- *
- * // Thicker weight (bolder strokes and inner icons)
- * <StatusCircle status="todo" className="h-5 w-5" color="#888" weight={3} />
  * ```
  *
  * **Portable:** Zero dependencies beyond React. Pure inline SVG.
- * Copy this file into any React project.
  *
  * **Sizing:** Uses the `className` prop for width/height (e.g. Tailwind's `h-4 w-4`),
  * matching the pattern used by lucide-react icons.
