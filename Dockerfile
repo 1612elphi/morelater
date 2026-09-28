@@ -1,5 +1,5 @@
 # -- Builder --
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 RUN apk add --no-cache python3 make g++
 RUN npm install -g bun
 
@@ -11,13 +11,14 @@ RUN bun run build
 RUN bun build mcp/server.ts --target=node --outfile=dist/mcp-server.js
 
 # -- Runner --
-FROM node:20-alpine AS runner
+FROM node:24-alpine AS runner
 RUN apk add --no-cache tzdata
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV DATABASE_PATH=/app/data/morelater.db
 ENV TZ=Europe/Berlin
+ENV HOSTNAME=0.0.0.0
 
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static

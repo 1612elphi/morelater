@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { chips } from "@/lib/db/schema";
 import { eq, and, gte, lte, isNull } from "drizzle-orm";
-import { v4 as uuid } from "uuid";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -37,7 +36,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const now = new Date().toISOString();
-  const id = uuid();
+  const id = crypto.randomUUID();
 
   const newChip = {
     id,

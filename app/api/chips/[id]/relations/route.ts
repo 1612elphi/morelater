@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { chips, chipRelations } from "@/lib/db/schema";
 import { eq, or } from "drizzle-orm";
-import { v4 as uuid } from "uuid";
 
 export async function GET(
   _request: NextRequest,
@@ -94,7 +93,7 @@ export async function POST(
   }
 
   const now = new Date().toISOString();
-  const relationId = uuid();
+  const relationId = crypto.randomUUID();
 
   const sourceId = direction === "blockedBy" ? targetChipId : id;
   const destId = direction === "blockedBy" ? id : targetChipId;

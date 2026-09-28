@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { dayTagTypes } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { v4 as uuid } from "uuid";
 
 export async function GET() {
   const result = db
@@ -15,7 +14,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const id = uuid();
+  const id = crypto.randomUUID();
 
   db.insert(dayTagTypes)
     .values({

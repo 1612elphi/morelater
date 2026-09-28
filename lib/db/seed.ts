@@ -1,4 +1,3 @@
-import { v4 as uuid } from "uuid";
 import { chipColours, dayTagTypes } from "./schema";
 import type { Database } from "./index";
 
@@ -24,7 +23,7 @@ export function seedDefaults(db: Database) {
     if (existingColours.length === 0) {
       for (const colour of DEFAULT_COLOURS) {
         tx.insert(chipColours)
-          .values({ id: uuid(), ...colour })
+          .values({ id: crypto.randomUUID(), ...colour })
           .run();
       }
     }
@@ -33,7 +32,7 @@ export function seedDefaults(db: Database) {
     if (existingTags.length === 0) {
       for (const tag of DEFAULT_DAY_TAG_TYPES) {
         tx.insert(dayTagTypes)
-          .values({ id: uuid(), ...tag })
+          .values({ id: crypto.randomUUID(), ...tag })
           .run();
       }
     }
