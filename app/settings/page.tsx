@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { RecencySettings } from "@/components/settings/RecencySettings";
 import type { ChipColour, DayTagType } from "@/lib/types";
 
 export default function SettingsPage() {
@@ -97,6 +98,7 @@ export default function SettingsPage() {
           <TabsTrigger value="colours">Chip Colours</TabsTrigger>
           <TabsTrigger value="daytags">Day Tags</TabsTrigger>
           <TabsTrigger value="calendar">Calendar</TabsTrigger>
+          <TabsTrigger value="recency">Recency</TabsTrigger>
         </TabsList>
 
         {/* Chip Colours tab — unchanged */}
@@ -243,6 +245,9 @@ export default function SettingsPage() {
               {copied ? "Copied!" : "Copy"}
             </Button>
           </div>
+        </TabsContent>
+        <TabsContent value="recency" className="mt-4">
+          <RecencySettings />
         </TabsContent>
       </Tabs>
     </div>

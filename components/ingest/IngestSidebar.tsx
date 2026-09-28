@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import { ColourBlank } from "./ColourBlank";
 import { IngestChipRow } from "./IngestChipRow";
+import { RecencyTracker } from "./RecencyTracker";
 import type { Chip, ChipColour } from "@/lib/types";
 
 /** Extract hue (0–360) from a hex colour for sorting. */
@@ -103,6 +104,8 @@ export function IngestSidebar({
 
   return (
     <div className="flex h-full w-[280px] flex-col border-r bg-muted/20">
+      <RecencyTracker />
+
       {/* Quick-add + star filter */}
       <div className="border-b p-2">
         <form onSubmit={handleQuickAdd} className="flex gap-1">

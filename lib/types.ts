@@ -99,3 +99,22 @@ export interface DayTag {
 export interface DayTagWithType extends DayTag {
   tagType: DayTagType;
 }
+
+export interface Person {
+  id: string;
+  name: string;
+  photo: string | null;
+  sortOrder: number;
+}
+
+export interface FormatMember {
+  personId: string;
+  lastUsedAt: string | null;
+}
+
+export interface Format {
+  id: string;
+  name: string;
+  sortOrder: number;
+  members: FormatMember[];
+}

@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, primaryKey } from "drizzle-orm/sqlite-core";
 
 export const chipColours = sqliteTable("chip_colours", {
   id: text("id").primaryKey(),
@@ -65,3 +65,30 @@ export const dayTags = sqliteTable("day_tags", {
     .notNull()
     .references(() => dayTagTypes.id),
 });
+
+export const people = sqliteTable("people", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  photo: text("photo"), // data url
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+
+export const formats = sqliteTable("formats", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+
+export const formatPeople = sqliteTable(
+  "format_people",
+  {
+    formatId: text("format_id")
+      .notNull()
+      .references(() => formats.id, { onDelete: "cascade" }),
+    personId: text("person_id")
+      .notNull()
+      .references(() => people.id, { onDelete: "cascade" }),
+    lastUsedAt: text("last_used_at"),
+  },
+  (t) => [primaryKey({ columns: [t.formatId, t.personId] })]
+);

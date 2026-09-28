@@ -18,8 +18,7 @@ function initDb() {
 
   const db = drizzle(sqlite, { schema });
 
-  // drizzle wraps migrations in BEGIN, where PRAGMA foreign_keys=OFF is a no-op,
-  // so table rebuilds would cascade-delete children if FKs were already on
+  // else rebuilds cascade-delete children
   migrate(db, {
     migrationsFolder: path.resolve(process.cwd(), "drizzle"),
   });
