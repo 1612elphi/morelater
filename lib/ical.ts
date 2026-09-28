@@ -30,6 +30,7 @@ export function generateCalendar() {
 
   for (const row of rows) {
     const start = new Date(`${row.date}T${row.time}:00`);
+    if (isNaN(start.getTime())) continue;
     const duration = row.durationMinutes ?? 60;
     const summary = row.isShoot ? `📷 ${row.title}` : row.title;
     const categories: string[] = [];

@@ -15,13 +15,15 @@ function initDb() {
   sqlite.pragma("journal_mode = WAL");
   sqlite.pragma("busy_timeout = 5000");
   sqlite.pragma("synchronous = NORMAL");
-  sqlite.pragma("foreign_keys = ON");
 
   const db = drizzle(sqlite, { schema });
 
+  // drizzle wraps migrations in BEGIN, where PRAGMA foreign_keys=OFF is a no-op,
+  // so table rebuilds would cascade-delete children if FKs were already on
   migrate(db, {
     migrationsFolder: path.resolve(process.cwd(), "drizzle"),
   });
+  sqlite.pragma("foreign_keys = ON");
 
   seedDefaults(db);
 
@@ -34,9 +36,6 @@ declare global {
 }
 
 function getDb(): DrizzleDb {
-  if (process.env.NODE_ENV === "production") {
-    return initDb();
-  }
   if (!globalThis._db) {
     globalThis._db = initDb();
   }

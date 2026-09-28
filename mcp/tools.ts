@@ -32,8 +32,8 @@ export function registerTools(server: McpServer, api: MoreLaterAPI) {
     {
       id: z.string(),
       title: z.string().optional(),
-      date: z.string().optional().describe("YYYY-MM-DD or null to unschedule"),
-      time: z.string().optional().describe("HH:MM or null"),
+      date: z.string().nullable().optional().describe("YYYY-MM-DD or null to unschedule"),
+      time: z.string().nullable().optional().describe("HH:MM or null"),
       durationMinutes: z.number().optional(),
       colourId: z.string().optional(),
       status: z.enum(STATUS_ENUM).optional(),

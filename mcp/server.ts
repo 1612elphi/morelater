@@ -38,7 +38,15 @@ const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse
   if (req.method === "POST") {
     let body = "";
     for await (const chunk of req) body += chunk;
-    await transport.handleRequest(req, res, JSON.parse(body));
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(body);
+    } catch {
+      res.writeHead(400, { "Content-Type": "text/plain" });
+      res.end("Invalid JSON");
+      return;
+    }
+    await transport.handleRequest(req, res, parsed);
   } else if (req.method === "GET" || req.method === "DELETE") {
     await transport.handleRequest(req, res);
   } else {

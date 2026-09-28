@@ -13,7 +13,8 @@ export function registerPrompts(server: McpServer, api: MoreLaterAPI) {
     },
     async ({ year, week }) => {
       const now = new Date();
-      const y = year ? Number(year) : now.getFullYear();
+      const isoYear = addDays(now, 4 - (now.getDay() || 7)).getFullYear();
+      const y = year ? Number(year) : isoYear;
       const w = week ? Number(week) : getISOWeekNumber(now);
       const start = getISOWeekStart(y, w);
       const end = addDays(start, 6);
