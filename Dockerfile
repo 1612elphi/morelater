@@ -27,8 +27,11 @@ COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/dist/mcp-server.js ./mcp-server.js
 COPY --from=builder /app/entrypoint.sh ./entrypoint.sh
 
-RUN mkdir -p /app/data
-RUN chmod +x /app/entrypoint.sh
+RUN mkdir -p /app/data /app/.next/cache \
+ && chown node:node /app/data /app/.next/cache \
+ && chmod +x /app/entrypoint.sh
+# uid 1000
+USER node
 
 EXPOSE 3000 3001
 CMD ["./entrypoint.sh"]

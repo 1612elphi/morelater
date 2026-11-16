@@ -1,11 +1,16 @@
 /** HTTP client wrapper for the MoreLater Next.js API. */
 export class MoreLaterAPI {
-  constructor(private baseUrl: string) {}
+  // authorization: the MCP caller's bearer token, checked by the API's lock
+  constructor(private baseUrl: string, private authorization?: string) {}
 
   private async request(path: string, init?: RequestInit) {
     const res = await fetch(`${this.baseUrl}${path}`, {
       ...init,
-      headers: { "Content-Type": "application/json", ...init?.headers },
+      headers: {
+        "Content-Type": "application/json",
+        ...(this.authorization && { Authorization: this.authorization }),
+        ...init?.headers,
+      },
     });
     if (!res.ok) {
       const text = await res.text();
@@ -32,7 +37,7 @@ export class MoreLaterAPI {
   }
 
   getChip(id: string) {
-    return this.request(`/api/chips/${id}`);
+    return this.request(`/api/chips/${encodeURIComponent(id)}`);
   }
 
   createChip(data: Record<string, unknown>) {
@@ -43,14 +48,14 @@ export class MoreLaterAPI {
   }
 
   updateChip(id: string, data: Record<string, unknown>) {
-    return this.request(`/api/chips/${id}`, {
+    return this.request(`/api/chips/${encodeURIComponent(id)}`, {
       method: "PATCH",
       body: JSON.stringify(data),
     });
   }
 
   deleteChip(id: string) {
-    return this.request(`/api/chips/${id}`, { method: "DELETE" });
+    return this.request(`/api/chips/${encodeURIComponent(id)}`, { method: "DELETE" });
   }
 
   // -- Colours --
@@ -77,7 +82,7 @@ export class MoreLaterAPI {
   }
 
   deleteDayTag(id: string) {
-    return this.request(`/api/day-tags/${id}`, { method: "DELETE" });
+    return this.request(`/api/day-tags/${encodeURIComponent(id)}`, { method: "DELETE" });
   }
 
   // -- Day Tag Types --
