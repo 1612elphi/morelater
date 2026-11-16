@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { chips, chipRelations } from "@/lib/db/schema";
-import { eq, or } from "drizzle-orm";
+import { and, eq, inArray, or } from "drizzle-orm";
+import { handle } from "@/lib/api";
 
 export async function GET(
   _request: NextRequest,
@@ -41,9 +42,7 @@ export async function GET(
           colourId: chips.colourId,
         })
         .from(chips)
-        .where(
-          or(...[...relatedIds].map((rid) => eq(chips.id, rid)))
-        )
+        .where(inArray(chips.id, [...relatedIds]))
         .all()
     : [];
 
@@ -67,18 +66,21 @@ export async function GET(
   return NextResponse.json({ blocks, blockedBy });
 }
 
-export async function POST(
+export const POST = handle(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const body = await request.json();
   const { targetChipId, direction } = body;
   // direction: 'blocks' means this chip blocks targetChipId
   //            'blockedBy' means targetChipId blocks this chip
 
-  if (!targetChipId) {
+  if (typeof targetChipId !== "string" || !targetChipId) {
     return NextResponse.json({ error: "targetChipId required" }, { status: 400 });
+  }
+  if (direction !== undefined && direction !== "blocks" && direction !== "blockedBy") {
+    return NextResponse.json({ error: "direction must be blocks or blockedBy" }, { status: 400 });
   }
 
   if (targetChipId === id) {
@@ -92,11 +94,24 @@ export async function POST(
     return NextResponse.json({ error: "Chip not found" }, { status: 404 });
   }
 
-  const now = new Date().toISOString();
-  const relationId = crypto.randomUUID();
-
   const sourceId = direction === "blockedBy" ? targetChipId : id;
   const destId = direction === "blockedBy" ? id : targetChipId;
+
+  const existing = db
+    .select()
+    .from(chipRelations)
+    .where(
+      and(
+        eq(chipRelations.sourceChipId, sourceId),
+        eq(chipRelations.targetChipId, destId),
+        eq(chipRelations.type, "blocks")
+      )
+    )
+    .get();
+  if (existing) return NextResponse.json(existing);
+
+  const now = new Date().toISOString();
+  const relationId = crypto.randomUUID();
 
   db.insert(chipRelations)
     .values({
@@ -115,4 +130,4 @@ export async function POST(
     .get();
 
   return NextResponse.json(created, { status: 201 });
-}
+});

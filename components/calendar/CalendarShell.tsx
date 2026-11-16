@@ -24,7 +24,6 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
   const [chips, setChips] = useState<Chip[]>([]);
   const [dayTags, setDayTags] = useState<DayTagWithType[]>([]);
   const [selectedChip, setSelectedChip] = useState<Chip | null>(null);
-  const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -32,18 +31,20 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
   const [relations, setRelations] = useState<ChipRelation[]>([]);
   const [blockingPick, setBlockingPick] = useState<{ chipId: string; direction: "blocks" | "blockedBy" } | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+  // newest request wins when months are flipped quickly
+  const chipsRequest = useRef(0);
+  const dayTagsRequest = useRef(0);
 
   const weeks = getMonthWeeks(year, month);
   const startDate = toDateString(weeks[0][0]);
   const endDate = toDateString(weeks[weeks.length - 1][6]);
 
   const fetchChips = useCallback(async () => {
-    setLoading(true);
+    const request = ++chipsRequest.current;
     const res = await fetch(
       `/api/chips?startDate=${startDate}&endDate=${endDate}`
     );
-    if (res.ok) setChips(await res.json());
-    setLoading(false);
+    if (res.ok && request === chipsRequest.current) setChips(await res.json());
   }, [startDate, endDate]);
 
   const fetchRelations = useCallback(async () => {
@@ -52,10 +53,11 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
   }, []);
 
   const fetchDayTags = useCallback(async () => {
+    const request = ++dayTagsRequest.current;
     const res = await fetch(
       `/api/day-tags?startDate=${startDate}&endDate=${endDate}`
     );
-    if (res.ok) setDayTags(await res.json());
+    if (res.ok && request === dayTagsRequest.current) setDayTags(await res.json());
   }, [startDate, endDate]);
 
   useEffect(() => {
@@ -118,7 +120,7 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
-      }).then(() => fetchChips(), () => fetchChips());
+      }).then(refreshAll, refreshAll);
       return;
     }
 
@@ -129,7 +131,7 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
       setChips((prev) => prev.filter((c) => c.id !== chipId));
       setRefreshKey((k) => k + 1);
       fetch(`/api/chips/${chipId}`, { method: "DELETE" })
-        .then(() => fetchChips(), () => fetchChips());
+        .then(refreshAll, refreshAll);
       return;
     }
 
@@ -252,9 +254,11 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
   for (const rel of relations) {
     if (rel.type !== "blocks") continue;
     // rel.sourceChipId blocks rel.targetChipId
-    // targetChipId is blocked if sourceChipId is not exsol
-    const blocker = chips.find((c) => c.id === rel.sourceChipId);
-    if (blocker && blocker.status !== "exsol") {
+    // targetChipId is blocked if sourceChipId is not exsol; the blocker may be
+    // unscheduled or in another month, so fall back to the status the API sent
+    const status =
+      chips.find((c) => c.id === rel.sourceChipId)?.status ?? rel.sourceStatus;
+    if (status && status !== "exsol") {
       blockedChipIds.add(rel.targetChipId);
     }
   }
@@ -322,7 +326,7 @@ export function CalendarShell({ colours, tagTypes }: CalendarShellProps) {
           </button>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">{monthName}</span>
+          <span className="text-sm font-medium" suppressHydrationWarning>{monthName}</span>
           <button
             onClick={goToday}
             className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"

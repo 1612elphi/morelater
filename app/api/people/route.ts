@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { people } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { handle } from "@/lib/api";
 
 const MAX_PHOTO_LENGTH = 200_000;
 
@@ -20,7 +21,7 @@ export async function GET() {
   );
 }
 
-export async function POST(request: NextRequest) {
+export const POST = handle(async (request: NextRequest) => {
   const { name, photo = null } = await request.json();
   if (typeof name !== "string" || !name.trim() || !validPhoto(photo))
     return NextResponse.json({ error: "Invalid person" }, { status: 400 });
@@ -32,9 +33,9 @@ export async function POST(request: NextRequest) {
     db.select().from(people).where(eq(people.id, id)).get(),
     { status: 201 }
   );
-}
+});
 
-export async function PATCH(request: NextRequest) {
+export const PATCH = handle(async (request: NextRequest) => {
   const { id, name, photo } = await request.json();
   const updates: { name?: string; photo?: string | null } = {};
   if (name !== undefined) {
@@ -48,13 +49,16 @@ export async function PATCH(request: NextRequest) {
     updates.photo = photo;
   }
 
+  if (typeof id !== "string" || Object.keys(updates).length === 0)
+    return NextResponse.json({ error: "id and a field to change are required" }, { status: 400 });
+
   const result = db.update(people).set(updates).where(eq(people.id, id)).run();
   if (result.changes === 0)
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(
     db.select().from(people).where(eq(people.id, id)).get()
   );
-}
+});
 
 export async function DELETE(request: NextRequest) {
   const id = request.nextUrl.searchParams.get("id");

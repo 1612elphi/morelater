@@ -31,7 +31,12 @@ The database is created automatically on first run at `data/morelater.db`. Defau
 |---|---|---|
 | `DATABASE_PATH` | `data/morelater.db` | SQLite database file location |
 | `MORELATER_API_URL` | `http://localhost:3000` | Base URL the MCP server uses to reach the Next.js API |
-| `MCP_PORT` | `3001` | Port the MCP HTTP server listens on |
+| `MCP_PORT` | `3001` | Port the MCP HTTP server listens on (loopback; the app proxies `/mcp` to 3001) |
+| `MORELATER_PASSWORD` | unset (open) | Lock password. Set it and every page, the API and `/mcp` need a login. |
+| `MORELATER_KEYS` | none | Lock symbol keys that must be latched along with the password, e.g. `♄⚸⏃`. |
+| `MORELATER_PUBLIC_URL` | request host | OAuth issuer URL. Setting it without a password refuses to start. |
+
+With a password set, browsers get a lock screen, and MCP clients sign in through OAuth (discovery, dynamic registration, PKCE) and are approved in the browser. `/api/calendar.ics` stays open so calendar apps can subscribe. Put the three variables in a `.env` next to `docker-compose.yml`.
 
 ## Docker
 
@@ -39,19 +44,11 @@ The database is created automatically on first run at `data/morelater.db`. Defau
 docker compose up --build
 ```
 
-This runs both the Next.js app (port 3000) and MCP server (port 3001). Data is persisted in a `./data` volume.
-
-To change ports, edit `docker-compose.yml`:
-
-```yaml
-ports:
-  - "8080:3000"   # Next.js
-  - "8081:3001"   # MCP
-```
+This runs the Next.js app on port 3800 with the MCP server behind it at `/mcp`. Data is persisted in a `./data` volume, which must be writable by uid 1000.
 
 ## MCP server
 
-The MCP server exposes MoreLater's data over [Streamable HTTP](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http) at a single `/mcp` endpoint. It runs as a separate process and calls the Next.js API internally.
+The MCP server exposes MoreLater's data over [Streamable HTTP](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http) at a single `/mcp` endpoint on the app's own port. It runs as a separate process and calls the Next.js API with the caller's token.
 
 ### Connecting from Claude Desktop
 
@@ -61,7 +58,7 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 {
   "mcpServers": {
     "morelater": {
-      "url": "http://localhost:3001/mcp"
+      "url": "http://localhost:3000/mcp"
     }
   }
 }
@@ -75,7 +72,7 @@ Add to your Claude Code settings (`.claude/settings.json` or global):
 {
   "mcpServers": {
     "morelater": {
-      "url": "http://localhost:3001/mcp"
+      "url": "http://localhost:3000/mcp"
     }
   }
 }

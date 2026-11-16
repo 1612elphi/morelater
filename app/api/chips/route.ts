@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { chips } from "@/lib/db/schema";
 import { eq, and, gte, lte, isNull } from "drizzle-orm";
+import { badLink, chipCreate, handle } from "@/lib/api";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -20,46 +21,26 @@ export async function GET(request: NextRequest) {
   }
   if (status) conditions.push(eq(chips.status, status));
 
-  const result =
-    conditions.length > 0
-      ? db
-          .select()
-          .from(chips)
-          .where(and(...conditions))
-          .orderBy(chips.date, chips.sortOrder)
-          .all()
-      : db.select().from(chips).orderBy(chips.date, chips.sortOrder).all();
+  const result = db
+    .select()
+    .from(chips)
+    .where(and(...conditions))
+    .orderBy(chips.date, chips.sortOrder)
+    .all();
 
   return NextResponse.json(result);
 }
 
-export async function POST(request: NextRequest) {
-  const body = await request.json();
+export const POST = handle(async (request: NextRequest) => {
+  const body = chipCreate.parse(await request.json());
+  if (body.linkedChipId && !db.select({ id: chips.id }).from(chips).where(eq(chips.id, body.linkedChipId)).get())
+    return badLink();
   const now = new Date().toISOString();
   const id = crypto.randomUUID();
 
-  const newChip = {
-    id,
-    title: body.title,
-    date: body.date ?? null,
-    time: body.time ?? null,
-    durationMinutes: body.durationMinutes ?? null,
-    colourId: body.colourId ?? null,
-    status: body.status ?? "obskur",
-    modifier: body.modifier ?? null,
-    isShoot: body.isShoot ?? false,
-    linkedChipId: body.linkedChipId ?? null,
-    sortOrder: body.sortOrder ?? 0,
-    body: body.body ?? null,
-    starred: body.starred ?? false,
-    series: body.series ?? null,
-    seriesNumber: body.seriesNumber ?? null,
-    calendarUid: null,
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  db.insert(chips).values(newChip).run();
+  db.insert(chips)
+    .values({ ...body, id, calendarUid: null, createdAt: now, updatedAt: now })
+    .run();
   const created = db.select().from(chips).where(eq(chips.id, id)).get();
   return NextResponse.json(created, { status: 201 });
-}
+});
