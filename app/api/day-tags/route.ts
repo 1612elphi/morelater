@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { dayTags, dayTagTypes } from "@/lib/db/schema";
 import { and, gte, lte, eq } from "drizzle-orm";
+import { dayTagCreate, handle } from "@/lib/api";
+
+const withType = {
+  id: dayTags.id,
+  date: dayTags.date,
+  tagTypeId: dayTags.tagTypeId,
+  tagType: {
+    id: dayTagTypes.id,
+    name: dayTagTypes.name,
+    icon: dayTagTypes.icon,
+    colour: dayTagTypes.colour,
+    sortOrder: dayTagTypes.sortOrder,
+    isActive: dayTagTypes.isActive,
+  },
+};
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -13,19 +28,7 @@ export async function GET(request: NextRequest) {
   if (endDate) conditions.push(lte(dayTags.date, endDate));
 
   const rows = db
-    .select({
-      id: dayTags.id,
-      date: dayTags.date,
-      tagTypeId: dayTags.tagTypeId,
-      tagType: {
-        id: dayTagTypes.id,
-        name: dayTagTypes.name,
-        icon: dayTagTypes.icon,
-        colour: dayTagTypes.colour,
-        sortOrder: dayTagTypes.sortOrder,
-        isActive: dayTagTypes.isActive,
-      },
-    })
+    .select(withType)
     .from(dayTags)
     .innerJoin(dayTagTypes, eq(dayTags.tagTypeId, dayTagTypes.id))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
@@ -35,36 +38,20 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(rows);
 }
 
-export async function POST(request: NextRequest) {
-  const body = await request.json();
-  const id = crypto.randomUUID();
+export const POST = handle(async (request: NextRequest) => {
+  const { date, tagTypeId } = dayTagCreate.parse(await request.json());
+  const tagged = () =>
+    db
+      .select(withType)
+      .from(dayTags)
+      .innerJoin(dayTagTypes, eq(dayTags.tagTypeId, dayTagTypes.id))
+      .where(and(eq(dayTags.date, date), eq(dayTags.tagTypeId, tagTypeId)))
+      .get();
 
-  db.insert(dayTags)
-    .values({
-      id,
-      date: body.date,
-      tagTypeId: body.tagTypeId,
-    })
-    .run();
+  // a day carries each tag type once
+  const existing = tagged();
+  if (existing) return NextResponse.json(existing);
 
-  const created = db
-    .select({
-      id: dayTags.id,
-      date: dayTags.date,
-      tagTypeId: dayTags.tagTypeId,
-      tagType: {
-        id: dayTagTypes.id,
-        name: dayTagTypes.name,
-        icon: dayTagTypes.icon,
-        colour: dayTagTypes.colour,
-        sortOrder: dayTagTypes.sortOrder,
-        isActive: dayTagTypes.isActive,
-      },
-    })
-    .from(dayTags)
-    .innerJoin(dayTagTypes, eq(dayTags.tagTypeId, dayTagTypes.id))
-    .where(eq(dayTags.id, id))
-    .get();
-
-  return NextResponse.json(created, { status: 201 });
-}
+  db.insert(dayTags).values({ id: crypto.randomUUID(), date, tagTypeId }).run();
+  return NextResponse.json(tagged(), { status: 201 });
+});

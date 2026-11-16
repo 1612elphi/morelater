@@ -30,9 +30,10 @@ export function ChipCreatePopover({
   onCreated,
   onCreatedForLinking,
 }: ChipCreatePopoverProps) {
+  const activeColours = colours.filter((c) => c.isActive);
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
-  const [colourId, setColourId] = useState<string>(colours[0]?.id ?? "");
+  const [colourId, setColourId] = useState<string>(activeColours[0]?.id ?? "");
   const [time, setTime] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -96,7 +97,7 @@ export function ChipCreatePopover({
               <SelectValue placeholder="Colour" />
             </SelectTrigger>
             <SelectContent>
-              {colours.map((c) => (
+              {activeColours.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
                   <span className="flex items-center gap-2">
                     <span

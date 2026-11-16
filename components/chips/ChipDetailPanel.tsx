@@ -25,6 +25,7 @@ import { Camera, Ban, X } from "lucide-react";
 import { STATUS_CONFIG, MODIFIER_CONFIG } from "@/lib/types";
 import type { Chip, ChipColour, ChipStatus, ChipModifier, RelatedChip } from "@/lib/types";
 import { StatusCircle } from "@/components/ui/StatusCircle";
+import ReactMarkdown from "react-markdown";
 
 interface ChipDetailPanelProps {
   chip: Chip | null;
@@ -477,7 +478,9 @@ export function ChipDetailPanel({
               </TabsContent>
               <TabsContent value="preview" className="mt-0">
                 <div className="prose prose-sm max-h-48 min-h-[7.5rem] overflow-y-auto rounded-md border p-3 text-sm">
-                  {body || (
+                  {body ? (
+                    <ReactMarkdown>{body}</ReactMarkdown>
+                  ) : (
                     <span className="text-muted-foreground">
                       Nothing to preview
                     </span>

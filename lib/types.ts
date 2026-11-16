@@ -63,6 +63,7 @@ export interface ChipRelation {
   targetChipId: string;
   type: string; // 'blocks'
   createdAt: string;
+  sourceStatus?: ChipStatus; // only from GET /api/relations
 }
 
 export interface RelatedChip {

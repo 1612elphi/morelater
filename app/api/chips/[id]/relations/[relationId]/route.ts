@@ -1,18 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { chipRelations } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string; relationId: string }> }
 ) {
-  const { relationId } = await params;
+  const { id, relationId } = await params;
 
   const existing = db
     .select()
     .from(chipRelations)
-    .where(eq(chipRelations.id, relationId))
+    .where(
+      and(
+        eq(chipRelations.id, relationId),
+        or(eq(chipRelations.sourceChipId, id), eq(chipRelations.targetChipId, id))
+      )
+    )
     .get();
 
   if (!existing) {

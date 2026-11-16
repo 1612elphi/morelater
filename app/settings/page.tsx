@@ -25,7 +25,7 @@ export default function SettingsPage() {
   }, []);
 
   async function loadColours() {
-    const res = await fetch("/api/colours");
+    const res = await fetch("/api/colours?all=1");
     if (res.ok) setColours(await res.json());
   }
 
@@ -54,13 +54,15 @@ export default function SettingsPage() {
     loadColours();
   }
 
+  // Optimistic: reloading after every edit raced with the next one and reverted it.
   async function updateColour(id: string, updates: Partial<ChipColour>) {
-    await fetch("/api/colours", {
+    setColours((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
+    const res = await fetch("/api/colours", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, ...updates }),
-    });
-    loadColours();
+    }).catch(() => null);
+    if (!res?.ok) loadColours();
   }
 
   async function addTagType() {
@@ -82,12 +84,13 @@ export default function SettingsPage() {
   }
 
   async function updateTagType(id: string, updates: Partial<DayTagType>) {
-    await fetch("/api/day-tag-types", {
+    setTagTypes((prev) => prev.map((t) => (t.id === id ? { ...t, ...updates } : t)));
+    const res = await fetch("/api/day-tag-types", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, ...updates }),
-    });
-    loadTagTypes();
+    }).catch(() => null);
+    if (!res?.ok) loadTagTypes();
   }
 
   return (
@@ -116,8 +119,11 @@ export default function SettingsPage() {
                   className="h-8 w-8 cursor-pointer rounded border-0"
                 />
                 <Input
-                  value={c.name}
-                  onChange={(e) => updateColour(c.id, { name: e.target.value })}
+                  defaultValue={c.name}
+                  onBlur={(e) =>
+                    e.target.value.trim() !== c.name &&
+                    updateColour(c.id, { name: e.target.value.trim() })
+                  }
                   className="h-8 flex-1 text-sm"
                 />
                 <Button
@@ -161,17 +167,19 @@ export default function SettingsPage() {
                 className="flex items-center gap-2 rounded border p-2"
               >
                 <Input
-                  value={t.icon}
-                  onChange={(e) =>
-                    updateTagType(t.id, { icon: e.target.value })
+                  defaultValue={t.icon}
+                  onBlur={(e) =>
+                    e.target.value.trim() !== t.icon &&
+                    updateTagType(t.id, { icon: e.target.value.trim() })
                   }
                   className="h-8 w-12 text-center text-sm"
                   title="Icon (emoji or character)"
                 />
                 <Input
-                  value={t.name}
-                  onChange={(e) =>
-                    updateTagType(t.id, { name: e.target.value })
+                  defaultValue={t.name}
+                  onBlur={(e) =>
+                    e.target.value.trim() !== t.name &&
+                    updateTagType(t.id, { name: e.target.value.trim() })
                   }
                   className="h-8 flex-1 text-sm"
                 />

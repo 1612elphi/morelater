@@ -2,60 +2,36 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { chipColours } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { colourCreate, colourPatch, handle, notFound, withId } from "@/lib/api";
 
-export async function GET() {
+// active only, unless ?all=1 (settings needs the inactive ones to reactivate them)
+export async function GET(request: NextRequest) {
+  const all = request.nextUrl.searchParams.has("all");
   const colours = db
     .select()
     .from(chipColours)
-    .where(eq(chipColours.isActive, true))
+    .where(all ? undefined : eq(chipColours.isActive, true))
     .orderBy(chipColours.sortOrder)
     .all();
   return NextResponse.json(colours);
 }
 
-export async function POST(request: NextRequest) {
-  const body = await request.json();
+const byId = (id: string) =>
+  db.select().from(chipColours).where(eq(chipColours.id, id)).get();
+
+export const POST = handle(async (request: NextRequest) => {
+  const body = colourCreate.parse(await request.json());
   const id = crypto.randomUUID();
+  db.insert(chipColours).values({ ...body, id }).run();
+  return NextResponse.json(byId(id), { status: 201 });
+});
 
-  db.insert(chipColours)
-    .values({
-      id,
-      name: body.name,
-      hex: body.hex,
-      icon: body.icon ?? null,
-      sortOrder: body.sortOrder ?? 0,
-      isActive: true,
-    })
-    .run();
-
-  const created = db
-    .select()
-    .from(chipColours)
-    .where(eq(chipColours.id, id))
-    .get();
-  return NextResponse.json(created, { status: 201 });
-}
-
-export async function PATCH(request: NextRequest) {
-  const body = await request.json();
-  if (!body.id)
-    return NextResponse.json({ error: "id required" }, { status: 400 });
-
-  db.update(chipColours)
-    .set({
-      ...(body.name !== undefined && { name: body.name }),
-      ...(body.hex !== undefined && { hex: body.hex }),
-      ...(body.icon !== undefined && { icon: body.icon }),
-      ...(body.sortOrder !== undefined && { sortOrder: body.sortOrder }),
-      ...(body.isActive !== undefined && { isActive: body.isActive }),
-    })
-    .where(eq(chipColours.id, body.id))
-    .run();
-
-  const updated = db
-    .select()
-    .from(chipColours)
-    .where(eq(chipColours.id, body.id))
-    .get();
-  return NextResponse.json(updated);
-}
+export const PATCH = handle(async (request: NextRequest) => {
+  const json = await request.json();
+  const { id } = withId.parse(json);
+  const updates = colourPatch.parse(json);
+  if (Object.keys(updates).length > 0)
+    db.update(chipColours).set(updates).where(eq(chipColours.id, id)).run();
+  const updated = byId(id);
+  return updated ? NextResponse.json(updated) : notFound();
+});

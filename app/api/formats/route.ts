@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { formats, formatPeople } from "@/lib/db/schema";
 import { and, eq, notInArray } from "drizzle-orm";
 import type { Format } from "@/lib/types";
+import { handle } from "@/lib/api";
 
 function listFormats(): Format[] {
   const members = db.select().from(formatPeople).all();
@@ -23,7 +24,7 @@ export async function GET() {
   return NextResponse.json(listFormats());
 }
 
-export async function POST(request: NextRequest) {
+export const POST = handle(async (request: NextRequest) => {
   const { name } = await request.json();
   if (typeof name !== "string" || !name.trim())
     return NextResponse.json({ error: "Invalid name" }, { status: 400 });
@@ -36,11 +37,11 @@ export async function POST(request: NextRequest) {
     listFormats().find((f) => f.id === id),
     { status: 201 }
   );
-}
+});
 
-export async function PATCH(request: NextRequest) {
+export const PATCH = handle(async (request: NextRequest) => {
   const { id, name, memberIds, usedPersonId } = await request.json();
-  if (!db.select().from(formats).where(eq(formats.id, id)).get())
+  if (typeof id !== "string" || !db.select().from(formats).where(eq(formats.id, id)).get())
     return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   if (name !== undefined) {
@@ -82,7 +83,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   return NextResponse.json(listFormats().find((f) => f.id === id));
-}
+});
 
 export async function DELETE(request: NextRequest) {
   const id = request.nextUrl.searchParams.get("id");
